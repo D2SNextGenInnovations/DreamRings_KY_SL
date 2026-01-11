@@ -1,0 +1,199 @@
+﻿@model MrGroom_KY_SL.Models.Customer
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Customer Details";
+}
+
+<style>
+    /* ===== Modern Detail Page Styles ===== */
+    .customer-header {
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25);
+    }
+
+        .customer-header h2 {
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+    .customer-meta {
+        color: #e0e0e0;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .section-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        color: #333;
+        border-left: 5px solid #4f46e5;
+        padding-left: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .card-modern {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        background-color: #fff;
+    }
+
+        .card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+        }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #f1f1f1;
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        color: #fff;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #5b54f5, #a855f7);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+    .divider {
+        border-bottom: 2px dashed #ddd;
+        margin: 2rem 0;
+    }
+
+    .address-card p {
+        margin-bottom: 0.5rem;
+        color: #555;
+    }
+
+    .no-data {
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+</style>
+
+<div class="container py-5">
+    <!-- Header Card -->
+    <div class="customer-header mb-5 d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h2><i class="bi bi-person-circle me-2"></i> @Model.FirstName @Model.LastName</h2>
+            <div class="customer-meta">
+                <strong>NIC:</strong> @Model.NICNumber <br />
+                <strong>Email:</strong> @Model.Email <br />
+                <strong>Phone:</strong> @Model.Phone
+            </div>
+        </div>
+        <a href="@Url.Action("Index", "Customer")" class="btn btn-light rounded-pill px-4 mt-3 mt-md-0">
+            <i class="bi bi-arrow-left-circle me-1"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Basic Information & Contact Details -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card-modern p-4 h-100">
+                <h5 class="section-title"><i class="bi bi-person-lines-fill me-2"></i> Basic Information</h5>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-secondary">First Name</dt>
+                    <dd class="col-sm-7">@Model.FirstName</dd>
+
+                    <dt class="col-sm-5 text-secondary">Last Name</dt>
+                    <dd class="col-sm-7">@Model.LastName</dd>
+
+                    <dt class="col-sm-5 text-secondary">NIC Number</dt>
+                    <dd class="col-sm-7">@Model.NICNumber</dd>
+
+                    @if (Model.CreatedAt != null)
+                    {
+                        <dt class="col-sm-5 text-secondary">Created Date</dt>
+                        <dd class="col-sm-7">@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card-modern p-4 h-100">
+                <h5 class="section-title"><i class="bi bi-envelope-paper-fill me-2"></i> Contact Details</h5>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-secondary">Email</dt>
+                    <dd class="col-sm-7">@Model.Email</dd>
+
+                    <dt class="col-sm-5 text-secondary">Phone</dt>
+                    <dd class="col-sm-7">@Model.Phone</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Addresses -->
+    <h5 class="section-title"><i class="bi bi-geo-alt-fill me-2"></i> Address Information</h5>
+    @if (Model.Addresses != null && Model.Addresses.Any())
+    {
+        <div class="row g-4">
+            @foreach (var addr in Model.Addresses)
+            {
+                <div class="col-md-6">
+                    <div class="card-modern p-4 h-100 address-card">
+                        <h6 class="fw-bold text-secondary mb-3">
+                            <i class="bi bi-house-door-fill me-1"></i> @addr.AddressType
+                        </h6>
+                        <p><strong>Line 1:</strong> @addr.AddressLine1</p>
+                        @if (!string.IsNullOrEmpty(addr.AddressLine2))
+                        {
+                            <p><strong>Line 2:</strong> @addr.AddressLine2</p>
+                        }
+                        @if (!string.IsNullOrEmpty(addr.AddressLine3))
+                        {
+                            <p><strong>Line 3:</strong> @addr.AddressLine3</p>
+                        }
+                        <p><strong>City:</strong> @addr.City</p>
+                        @if (!string.IsNullOrEmpty(addr.StateOrProvince))
+                        {
+                            <p><strong>State/Province:</strong> @addr.StateOrProvince</p>
+                        }
+                        @if (!string.IsNullOrEmpty(addr.PostalCode))
+                        {
+                            <p><strong>Postal Code:</strong> @addr.PostalCode</p>
+                        }
+                        <p><strong>Country:</strong> @addr.Country</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="no-data mt-4">
+            <i class="bi bi-info-circle me-2"></i> No addresses available.
+        </div>
+    }
+
+    <div class="text-center mt-5">
+        <a href="@Url.Action("Index", "Customer")" class="btn btn-gradient rounded-pill px-5 py-2">
+            <i class="bi bi-arrow-left-circle me-2"></i> Back to List
+        </a>
+    </div>
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+}

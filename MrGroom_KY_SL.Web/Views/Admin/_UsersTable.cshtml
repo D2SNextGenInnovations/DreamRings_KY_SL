@@ -1,0 +1,111 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Web.Models.UserViewModel>
+
+@{
+    bool isManageMode = Request.QueryString["manage"] == "true";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-users me-2 text-primary"></i>User List
+        </h5>
+        @if (!isManageMode)
+        {
+            <a href="@Url.Action("Index", "Admin", new { manage = "true" })" class="btn btn-sm btn-outline-primary ajax-page">
+                <i class="fas fa-tools me-1"></i> Manage Users
+            </a>
+        }
+        else
+        {
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-sm btn-outline-secondary ajax-page">
+                <i class="fas fa-arrow-left me-1"></i> Back to View
+            </a>
+        }
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle simple-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>First Name</th>
+                        <th>Created On</th>
+                        <th class="text-center">View</th>
+                        @if (isManageMode)
+                        {
+                            <th class="text-center">Actions</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="@(isManageMode ? 6 : 5)" class="text-center text-muted py-4">No users found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.Username</td>
+                                <td>@user.Email</td>
+                                <td>@user.Role</td>
+                                <td>@user.FirstName</td>
+                                <td>@(user.CreatedOn?.ToString("yyyy-MM-dd") ?? "")</td>
+                                <td class="text-center">
+                                    <a href="@Url.Action("Details", "Admin", new { id = user.UserId })" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                                @if (isManageMode)
+                                {
+                                    <td class="text-center">
+                                        <a href="@Url.Action("Edit", "Admin", new { id = user.UserId })"
+                                           class="btn btn-sm btn-outline-warning me-1"
+                                           data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="@Url.Action("Delete", "Admin", new { id = user.UserId })"
+                                           class="btn btn-sm btn-outline-danger"
+                                           data-bs-toggle="tooltip" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- PAGINATION -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="d-flex justify-content-end mt-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1, searchTerm = ViewBag.SearchTerm, manage = isManageMode ? "true" : null })">&laquo; Prev</a>
+                </li>
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    string activeClass = i == ViewBag.CurrentPage ? "active" : "";
+                    <li class="page-item @activeClass">
+                        <a class="page-link ajax-page" href="@Url.Action("Index", new { page = i, searchTerm = ViewBag.SearchTerm, manage = isManageMode ? "true" : null })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1, searchTerm = ViewBag.SearchTerm, manage = isManageMode ? "true" : null })">Next &raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

@@ -1,0 +1,304 @@
+﻿@model MrGroom_KY_SL.Web.Models.UserViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Edit User";
+}
+
+<div class="package-edit-wrapper py-5">
+    <div class="package-edit-card p-5 shadow-lg">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-gradient">
+                <i class="bi bi-person-gear me-2"></i> Edit User
+            </h2>
+            <p class="text-muted">Update user details with style and precision ✨</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.PhotoBase64))
+        {
+            <div class="d-flex justify-content-center mb-4">
+                <img src="data:image/png;base64,@Model.PhotoBase64" alt="User Photo" class="user-photo-lg" />
+            </div>
+        }
+
+        @using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.UserId)
+
+            <!-- Username -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Username</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-person"></i></span>
+                    @Html.TextBoxFor(m => m.Username, new { @class = "form-control", placeholder = "Enter username" })
+                </div>
+                @Html.ValidationMessageFor(m => m.Username, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Password -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-lock"></i></span>
+                    @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Leave blank to keep current password" })
+                </div>
+                <small class="text-muted">Leave empty to keep the current password</small>
+                @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- First Name -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">First Name</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-person-badge"></i></span>
+                    @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control", placeholder = "Enter first name" })
+                </div>
+                @Html.ValidationMessageFor(m => m.FirstName, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Last Name -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Last Name</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-person-bounding-box"></i></span>
+                    @Html.TextBoxFor(m => m.LastName, new { @class = "form-control", placeholder = "Enter last name" })
+                </div>
+                @Html.ValidationMessageFor(m => m.LastName, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Email -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Email</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-envelope"></i></span>
+                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Enter email" })
+                </div>
+                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Gender -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Gender</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-gender-ambiguous"></i></span>
+                    @Html.DropDownListFor(m => m.Gender,
+                        new SelectList(new[] { "Male", "Female" }, Model.Gender),
+                        "Select Gender", new { @class = "form-select" })
+                </div>
+                @Html.ValidationMessageFor(m => m.Gender, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Role -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Role</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-shield-lock"></i></span>
+                    @Html.DropDownListFor(m => m.Role,
+                        new SelectList(new[] { "User", "Admin" }, Model.Role),
+                        "Select Role", new { @class = "form-select" })
+                </div>
+                @Html.ValidationMessageFor(m => m.Role, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Photo Upload -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Upload New Photo</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-image"></i></span>
+                    <input type="file" name="PhotoFile" class="form-control" accept="image/*" />
+                </div>
+            </div>
+
+            <!-- Active Switch -->
+            <div class="form-group mb-4 d-flex align-items-center justify-content-between">
+                <label class="fw-semibold mb-0">Active Status</label>
+                <div class="form-check form-switch">
+                    @Html.CheckBox("IsActive", Model.IsActive ?? false, new { @class = "form-check-input", id = "IsActive" })
+                    <label class="form-check-label" for="IsActive">Active</label>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="text-end mt-5 d-flex justify-content-end gap-3">
+                <a href="/Admin" class="btn btn-glass px-4">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-glow px-4">
+                    <i class="bi bi-save"></i> Save
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0e7ff, #f5f3ff, #f0f9ff);
+            background-size: 300% 300%;
+            animation: bgShift 12s ease infinite;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            color: #1e293b;
+        }
+
+        @@keyframes bgShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .package-edit-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .package-edit-card {
+            width: 100%;
+            max-width: 750px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: none;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05), inset 2px 2px 6px rgba(255,255,255,0.6), inset -2px -2px 8px rgba(0,0,0,0.05);
+            animation: fadeIn 0.8s ease;
+        }
+
+            .package-edit-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, #4b6cb7, #43cea2, #4b6cb7);
+                animation: gradientFlow 6s linear infinite;
+            }
+
+        @@keyframes gradientFlow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #185a9d, #43cea2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-group-text.icon-gradient i {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.1rem;
+        }
+
+        .input-group-text {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px 0 0 10px;
+            color: #64748b;
+        }
+
+        .form-control, .form-select {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0 10px 10px 0;
+            color: #1e293b;
+            box-shadow: inset 2px 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+            .form-control:focus, .form-select:focus {
+                border-color: #4b6cb7;
+                box-shadow: 0 0 0 3px rgba(75,108,183,0.25);
+            }
+
+        .btn-glass {
+            background: rgba(255,255,255,0.3);
+            border: 1.5px solid rgba(255,255,255,0.5);
+            color: #334155;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 8px rgba(75,108,183,0.1);
+            transition: all 0.3s ease;
+        }
+
+            .btn-glass:hover {
+                background: rgba(75,108,183,0.15);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(75,108,183,0.25);
+            }
+
+        .btn-glow {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(24,90,157,0.3);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+            .btn-glow:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(24,90,157,0.4);
+            }
+
+        @@keyframes glowPulse {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(24,90,157,0.3), 0 0 16px rgba(67,206,162,0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(24,90,157,0.5), 0 0 30px rgba(67,206,162,0.3);
+            }
+        }
+
+        .user-photo-lg {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .text-danger {
+            font-size: 0.85rem;
+        }
+
+        @@media (max-width: 768px) {
+            .package-edit-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+}

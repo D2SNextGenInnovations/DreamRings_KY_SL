@@ -1,0 +1,226 @@
+﻿@model MrGroom_KY_SL.Models.CompanyInfo
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Create Company Information";
+}
+
+<div class="company-create-wrapper py-5">
+    <div class="company-create-card p-5 shadow-lg">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-gradient">
+                <i class="bi bi-building-add me-2"></i> Create Company Information
+            </h2>
+            <p class="text-muted">Register your company's profile details</p>
+        </div>
+
+        @using (Html.BeginForm("Create", "CompanyInfo", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <!-- Company Name -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Company Name</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient">
+                        <i class="bi bi-building"></i>
+                    </span>
+                    @Html.TextBoxFor(m => m.CompanyName, new { @class = "form-control", placeholder = "Enter company name" })
+                </div>
+                @Html.ValidationMessageFor(m => m.CompanyName, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Address -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Address</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-geo-alt"></i></span>
+                    @Html.TextBoxFor(m => m.Address, new { @class = "form-control", placeholder = "Enter address" })
+                </div>
+            </div>
+
+            <!-- Phone -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Phone</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-telephone"></i></span>
+                    @Html.TextBoxFor(m => m.Phone, new { @class = "form-control", placeholder = "Enter phone" })
+                </div>
+            </div>
+
+            <!-- Secondary Phone -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Secondary Phone</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-telephone-plus"></i></span>
+                    @Html.TextBoxFor(m => m.SecondaryPhone, new { @class = "form-control", placeholder = "Enter secondary phone" })
+                </div>
+            </div>
+
+            <!-- Fax -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Fax</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-printer"></i></span>
+                    @Html.TextBoxFor(m => m.Fax, new { @class = "form-control", placeholder = "Enter fax number" })
+                </div>
+            </div>
+
+            <!-- Website -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Website</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-globe"></i></span>
+                    @Html.TextBoxFor(m => m.Web, new { @class = "form-control", placeholder = "Enter website URL" })
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Email</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-envelope-at"></i></span>
+                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", placeholder = "Enter email" })
+                </div>
+            </div>
+
+            <!-- Logo Upload -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Company Logo</label>
+                <input type="file" name="logoFile" class="form-control" accept="image/*" />
+            </div>
+
+            <!-- Buttons -->
+            <div class="text-end mt-5 d-flex justify-content-end">
+                <a href="@Url.Action("Index")" class="btn btn-glass px-4">Cancel</a>
+
+                <button type="submit" class="btn btn-glow px-4 ms-2">
+                    <i class="bi bi-save me-1"></i> Save
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0e7ff, #f5f3ff, #f0f9ff);
+            background-size: 300% 300%;
+            animation: bgShift 12s ease infinite;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            color: #1e293b;
+        }
+
+        @@keyframes bgShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .company-create-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .company-create-card {
+            width: 100%;
+            max-width: 750px;
+            background: #ffffff;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05),
+                        inset 2px 2px 6px rgba(255, 255, 255, 0.6),
+                        inset -2px -2px 8px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.8s ease;
+        }
+
+        .company-create-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 6px;
+            background: linear-gradient(90deg, #4b6cb7, #43cea2, #4b6cb7);
+            animation: gradientFlow 6s linear infinite;
+        }
+
+        @@keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #185a9d, #43cea2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-label {
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .form-control {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #4b6cb7;
+            box-shadow: 0 0 0 3px rgba(75,108,183,0.25);
+        }
+
+        .input-group-text {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px 0 0 10px;
+            color: #64748b;
+        }
+
+        .icon-gradient i {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: none !important;
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            color: #334155;
+        }
+
+        .btn-glass:hover {
+            background: rgba(75,108,183,0.15);
+        }
+
+        .btn-glow {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            color: white;
+            box-shadow: 0 4px 12px rgba(24,90,157,0.3);
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(24,90,157,0.4);
+        }
+    </style>
+}

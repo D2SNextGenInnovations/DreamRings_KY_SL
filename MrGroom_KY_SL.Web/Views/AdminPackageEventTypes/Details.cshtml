@@ -1,0 +1,161 @@
+﻿@model MrGroom_KY_SL.Models.PackageEventType
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Package–Event Type Details";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+<style>
+    .pet-header {
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 10px 25px rgba(79,70,229,0.25);
+    }
+
+        .pet-header h2 {
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+    .section-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        color: #333;
+        border-left: 5px solid #4f46e5;
+        padding-left: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .card-modern {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        background-color: #fff;
+        transition: all .3s ease;
+    }
+
+        .card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+        }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        color: #fff;
+        border: none;
+        transition: all .3s ease;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #5b54f5, #a855f7);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+    .divider {
+        border-bottom: 2px dashed #ddd;
+        margin: 2rem 0;
+    }
+</style>
+
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="pet-header mb-5 d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h2><i class="bi bi-collection me-2"></i> Package–Event Type Details</h2>
+            <div class="mt-2">
+                <strong>ID:</strong> @Model.PackageEventTypeId
+            </div>
+        </div>
+        <a href="@Url.Action("Index")" class="btn btn-light rounded-pill px-4 mt-3 mt-md-0">
+            <i class="bi bi-arrow-left-circle me-1"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Details Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card-modern p-4 h-100">
+                <h5 class="section-title"><i class="bi bi-box-seam me-2"></i> Package Information</h5>
+                @if (Model.Package != null)
+                {
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5"><strong>Package Name</strong></dt>
+                        <dd class="col-sm-7">@Model.Package.Name</dd>
+
+                        <dt class="col-sm-5"><strong>Description</strong></dt>
+                        <dd class="col-sm-7">@Model.Package.Description</dd>
+
+                        <dt class="col-sm-5"><strong>Base Price</strong></dt>
+                        <dd class="col-sm-7">@Model.Package.BasePrice.ToString("C")</dd>
+
+                        <dt class="col-sm-5"><strong>Duration (hrs)</strong></dt>
+                        <dd class="col-sm-7">@Model.Package.DurationHours</dd>
+
+                        <dt class="col-sm-5"><strong>Status</strong></dt>
+                        <dd class="col-sm-7">
+                            @if (Model.Package.IsActive == true)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactive</span>
+                            }
+                        </dd>
+                    </dl>
+                }
+                else
+                {
+                    <div class="text-muted fst-italic">No package data available.</div>
+                }
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card-modern p-4 h-100">
+                <h5 class="section-title"><i class="bi bi-calendar2-event me-2"></i> Event Type Information</h5>
+                @if (Model.EventType != null)
+                {
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5"><strong>Event Type</strong></dt>
+                        <dd class="col-sm-7">@Model.EventType.Name</dd>
+
+                        <dt class="col-sm-5"><strong>Price</strong></dt>
+                        <dd class="col-sm-7">@Model.EventType.Price.ToString("C")</dd>
+
+                        <dt class="col-sm-5"><strong>Status</strong></dt>
+                        <dd class="col-sm-7">
+                            @if (Model.EventType.IsActive == true)
+                            {
+                                <span class="badge bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactive</span>
+                            }
+                        </dd>
+                    </dl>
+                }
+                else
+                {
+                    <div class="text-muted fst-italic">No event type data available.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Footer -->
+    <div class="text-center mt-4">
+        <a href="@Url.Action("Index")" class="btn btn-gradient rounded-pill px-5 py-2 me-2">
+            <i class="bi bi-arrow-left-circle me-2"></i> Back to List
+        </a>
+    </div>
+</div>

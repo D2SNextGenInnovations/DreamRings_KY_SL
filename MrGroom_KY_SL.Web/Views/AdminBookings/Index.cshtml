@@ -1,0 +1,132 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Models.Booking>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Admin - Bookings";
+    bool isManageMode = Request.QueryString["manage"] == "true";
+    <link href="~/Content/custom-styles.css" rel="stylesheet" />;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="page-header-icon">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <h3 class="page-title mb-0">Bookings</h3>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- SUMMARY CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-primary text-white me-3">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Total Bookings</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Count()</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-success text-white me-3">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Confirmed</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Count(b => b.Status == "Confirmed")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-warning text-dark me-3">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Pending</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Count(b => b.Status == "Pending")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-danger text-white me-3">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Cancelled</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Count(b => b.Status == "Cancelled")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- SEARCH + CREATE -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    @using (Html.BeginForm("Index", "AdminBookings", FormMethod.Get))
+    {
+        <div class="search-bar-soft d-flex align-items-center">
+            <input type="text" name="searchTerm" placeholder="Search..." value="@ViewBag.SearchTerm" />
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </div>
+    }
+
+    <a href="@Url.Action("Create", "AdminBookings")" class="fab-btn-inline">
+        <i class="fas fa-plus"></i>
+        <span class="ms-2">Create New</span>
+    </a>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- BOOKINGS TABLE + PAGINATION -->
+<div id="bookingsContainer">
+    @Html.Partial("_BookingsTable", Model)
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on("click", ".ajax-page", function (e) {
+            e.preventDefault();
+            var url = $(this).attr("href");
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "html",
+                beforeSend: function () {
+                    $("#bookingsContainer").css("opacity", "0.6");
+                },
+                success: function (data) {
+                    if ($(data).find("#bookingsContainer").length) {
+                        $("#bookingsContainer").html($(data).find("#bookingsContainer").html());
+                    } else {
+                        $("#bookingsContainer").html(data);
+                    }
+                    $("#bookingsContainer").css("opacity", "1");
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                },
+                error: function () {
+                    alert("Failed to load data. Please try again.");
+                    $("#bookingsContainer").css("opacity", "1");
+                }
+            });
+        });
+    </script>
+}

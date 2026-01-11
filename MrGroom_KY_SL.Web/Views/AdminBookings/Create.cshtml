@@ -1,0 +1,498 @@
+﻿@model MrGroom_KY_SL.Models.Booking
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Create Booking";
+}
+
+<div class="booking-edit-wrapper py-5">
+    <div class="booking-edit-card p-5 shadow-lg">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-gradient">
+                <i class="bi bi-plus-circle me-2"></i> Create Booking
+            </h2>
+            <p class="text-muted">Add a new booking with elegance and flair ✨</p>
+        </div>
+
+        @using (Html.BeginForm("Create", "AdminBookings", FormMethod.Post, new { id = "bookingForm" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <!-- Customer -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Customer</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-person"></i></span>
+                    @*@Html.DropDownListFor(m => m.CustomerId, (SelectList)ViewBag.CustomerId, "- Select Customer -", new { @class = "form-control" })*@
+                    @Html.DropDownListFor(m => m.CustomerId, (SelectList)ViewBag.Customers, "- Select Customer -", new { @class = "form-control" })
+                </div>
+                @Html.ValidationMessageFor(m => m.CustomerId, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Package -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Package</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-box-seam"></i></span>
+                    @*@Html.DropDownListFor(m => m.PackageId, (SelectList)ViewBag.PackageId, "- Select Package -", new { @class = "form-control" })*@
+                    @Html.DropDownListFor(m => m.PackageId, (SelectList)ViewBag.Packages, "- Select Package -", new { @class = "form-control" })
+                </div>
+                @Html.ValidationMessageFor(m => m.PackageId, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Event Type -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Event Type</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-calendar-event"></i></span>
+                    @*@Html.DropDownListFor(m => m.EventTypeId, (SelectList)ViewBag.EventTypeId, "- Select Event Type -", new { @class = "form-control" })*@
+                    @Html.DropDownListFor(m => m.EventTypeId, (SelectList)ViewBag.EventTypes, "- Select Event Type -", new { @class = "form-control" })
+                </div>
+                @Html.ValidationMessageFor(m => m.EventTypeId, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Event Date -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Event Date</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-calendar3"></i></span>
+                    @Html.TextBoxFor(m => m.EventDate, new { @class = "form-control", type = "date" })
+                </div>
+                @Html.ValidationMessageFor(m => m.EventDate, "", new { @class = "text-danger small" })
+            </div>
+
+           <!-- Event Location -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Location</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient">
+                        <i class="bi bi-geo-alt"></i>
+                    </span>
+                    @Html.TextBoxFor(m => m.Location, new { @class = "form-control", placeholder = "Enter location" })
+                </div>
+                @Html.ValidationMessageFor(m => m.Location, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Assign Staff -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Assign Staff (required)</label>
+                @*@Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.SelectedStaffIds, new { @class = "form-control", size = 6 })*@
+                @Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })
+                @Html.ValidationMessageFor(m => m.SelectedStaffIds, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Buttons -->
+            <div class="text-end mt-5 d-flex justify-content-end gap-3">
+                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
+                <button type="submit" class="btn btn-glow px-4">
+                    <i class="bi bi-save"></i> Create
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<!--Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="paymentModalLabel">Complete Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <!-- Booking Summary -->
+                <div class="booking-summary-pills mb-3">
+                    <div class="pill-row">
+
+                        <div class="pill">
+                            <small class="pill-label">Customer</small>
+                            <div id="paymentCustomer" class="pill-value">—</div>
+                        </div>
+
+                        <div class="pill">
+                            <small class="pill-label">Full</small>
+                            <div class="pill-value">$<span id="paymentFullAmount">0.00</span></div>
+                        </div>
+
+                        <div class="pill">
+                            <small class="pill-label">Paid</small>
+                            <div class="pill-value">$<span id="paymentPrevPaid">0.00</span></div>
+                        </div>
+
+                        <div class="pill">
+                            <small class="pill-label">Balance</small>
+                            <div class="pill-value">$<span id="paymentBalance">0.00</span></div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+                <form id="paymentForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="BookingId" id="paymentBookingId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Amount</label>
+                        <input type="number" name="Amount" id="paymentAmount" class="form-control" step="0.01" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <input type="text" name="PaymentMethod" class="form-control" placeholder="e.g., Cash, Card" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Payment Type</label>
+                        <select name="PaymentType" class="form-select" required>
+                            <option value="">- Select Type -</option>
+                            <option>Advance</option>
+                            <option>Half</option>
+                            <option>Full</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        <textarea name="Remarks" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" id="btnSavePayment">Save Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+
+            function populatePaymentModal(res) {
+                // use safe defaults
+                var customer = res.customerName || res.customer || 'Unknown';
+                var full = parseFloat(res.fullAmount || 0) || 0;
+                var prev = parseFloat(res.prevPaid || 0) || 0;
+                var balance = (full - prev) || 0;
+
+                // fill pills (note: these IDs match the HTML above)
+                document.getElementById('paymentCustomer').textContent = customer;
+                document.getElementById('paymentFullAmount').textContent = full.toFixed(2);
+                document.getElementById('paymentPrevPaid').textContent = prev.toFixed(2);
+                document.getElementById('paymentBalance').textContent = balance.toFixed(2);
+
+                // keep existing hidden booking id if provided
+                if (res.bookingId) {
+                    var hid = document.getElementById('paymentBookingId');
+                    if (hid) hid.value = res.bookingId;
+                }
+
+                // set default payment amount input if present
+                var amtInput = document.getElementById('paymentAmount');
+                if (amtInput) amtInput.value = balance.toFixed(2);
+            }
+
+
+            // Booking form submission via AJAX
+            $('#bookingForm').on('submit', function (e) {
+                e.preventDefault();
+                const form = $(this);
+
+                $.ajax({
+                    url: '@Url.Action("CreateAjax", "AdminBookings")',
+                    type: 'POST',
+                    data: form.serialize(),
+                    success: function (res) {
+
+                        if (res.unpaid) {
+                            toastr.warning(res.message);
+                            setTimeout(() => {
+                                window.location.href = '/AdminBookings/Edit/' + res.bookingId;
+                            }, 1200);
+                            return;
+                        }
+
+                        if (res.success) {
+                            toastr.success(res.message);
+
+                            $('#paymentBookingId').val(res.bookingId);
+
+                            // Populate payment modal dynamically
+                            populatePaymentModal(res);
+
+                            $('#paymentModal').modal('show');
+                            return;
+                        }
+
+                        toastr.warning(res.message || 'Please correct the errors.');
+                    },
+                    error: function () {
+                        toastr.error('Something went wrong while creating booking.');
+                    }
+                });
+            });
+
+            // Save Payment via AJAX
+            $('#btnSavePayment').on('click', function () {
+                const paymentData = $('#paymentForm').serialize();
+
+                $.ajax({
+                    url: '@Url.Action("SavePayment", "AdminBookings")',
+                    type: 'POST',
+                    data: paymentData,
+                    success: function (res) {
+                        if (res.success) {
+                            toastr.success("Payment saved! Generating invoice...");
+                            $('#paymentModal').modal('hide');
+
+                            if (res.invoiceUrl) {
+                                setTimeout(() => {
+                                    window.open(res.invoiceUrl, "_blank");
+                                }, 800);
+                            }
+
+                            setTimeout(() => {
+                                window.location.href = '@Url.Action("Index", "AdminBookings")';
+                            }, 2000);
+                        } else {
+                            toastr.warning(res.message || "Unable to save payment.");
+                        }
+                    },
+                    error: function () {
+                        toastr.error("Error saving payment.");
+                    }
+                });
+            });
+
+            // Optional: update remaining balance dynamically on amount input
+            $('#paymentAmount').on('input', function () {
+                const fullAmount = parseFloat($('#paymentFullAmount').text()) || 0;
+                const prevPaid = parseFloat($('#paymentPrevPaid').text()) || 0;
+                const entered = parseFloat($(this).val()) || 0;
+                const remaining = fullAmount - prevPaid - entered;
+                $('#paymentBalance').text(remaining.toFixed(2));
+            });
+
+        });
+    </script>
+}
+
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0e7ff, #f5f3ff, #f0f9ff);
+            background-size: 300% 300%;
+            animation: bgShift 12s ease infinite;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            color: #1e293b;
+        }
+
+        @@keyframes bgShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .booking-edit-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .booking-edit-card {
+            width: 100%;
+            max-width: 750px;
+            background: #ffffff;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05), inset 2px 2px 6px rgba(255,255,255,0.6), inset -2px -2px 8px rgba(0,0,0,0.05);
+            animation: fadeIn 0.8s ease;
+        }
+
+            .booking-edit-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, #4b6cb7, #43cea2, #4b6cb7);
+                animation: gradientFlow 6s linear infinite;
+            }
+
+        @@keyframes gradientFlow {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #185a9d, #43cea2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-label {
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .input-group-text {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px 0 0 10px;
+        }
+
+        .icon-gradient i {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-control {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0 10px 10px 0;
+            color: #1e293b;
+            transition: all 0.3s ease;
+        }
+
+            .form-control:focus {
+                border-color: #4b6cb7;
+                box-shadow: 0 0 0 3px rgba(75,108,183,0.25);
+            }
+
+        .btn-glow {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(24,90,157,0.3);
+        }
+
+            .btn-glow:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(24,90,157,0.4);
+            }
+
+        .input-group, .form-group {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        /*  Modern Validation */
+        .text-danger.small {
+            display: none;
+        }
+
+        .field-validation-error.text-danger.small {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #d32f2f;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 6px;
+            background: #fdf2f2;
+            border-radius: 6px;
+            padding: 6px 10px;
+        }
+
+            .field-validation-error.text-danger.small::before {
+                content: "⚠️";
+                font-size: 0.9rem;
+                margin-right: 4px;
+            }
+
+        input.input-validation-error, select.input-validation-error, textarea.input-validation-error {
+            border-color: #e53935 !important;
+            background-color: #fff;
+            color: #b91c1c;
+            box-shadow: 0 0 0 3px rgba(229,57,53,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .saved-card {
+            position: relative;
+            gap: 15px;
+        }
+
+            .saved-card img {
+                max-height: 24px;
+            }
+
+            .saved-card button {
+                white-space: nowrap;
+            }
+
+        /*booking summary*/
+        .booking-summary-pills {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e4e4e4;
+        }
+
+        .pill-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pill {
+            background: #ffffff;
+            border-radius: 30px;
+            padding: 10px 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .pill-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+
+        .pill-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #212529;
+        }
+    </style>
+}

@@ -1,0 +1,280 @@
+﻿@model MrGroom_KY_SL.Web.Models.AdminDashboardViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Admin Dashboard";
+    <link href="~/Content/custom-styles.css" rel="stylesheet" />;
+}
+
+<!-- FullCalendar & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+@Html.Raw("<script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js'></script>")
+
+
+<!--Header -->
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="page-header-icon">
+            <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <h3 class="page-title mb-0">Admin Dashboard</h3>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- Dashboard Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-primary text-white shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-white-50 mb-1">Total Bookings</h6>
+                <h2 class="fw-bold mb-0">@Model.TotalBookings</h2>
+            </div>
+            <div class="dashboard-icon bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-calendar-check fa-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-success text-white shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-white-50 mb-1">Total Customers</h6>
+                <h2 class="fw-bold mb-0">@Model.TotalCustomers</h2>
+            </div>
+            <div class="dashboard-icon bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-users fa-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-warning text-dark shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-dark-50 mb-1">Total Revenue</h6>
+                <h2 class="fw-bold mb-0">@Model.TotalRevenue.ToString("C")</h2>
+            </div>
+            <div class="dashboard-icon bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-coins fa-lg text-dark"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-danger text-white shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-white-50 mb-1">Pending Payments</h6>
+                <h2 class="fw-bold mb-0">@Model.PendingPayments</h2>
+            </div>
+            <div class="dashboard-icon bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-exclamation-circle fa-lg"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- Booking Calendar Card -->
+<div class="card border-0 shadow-sm mb-5 rounded-4 overflow-hidden">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0 d-flex align-items-center">
+            <i class="fas fa-calendar-alt me-2"></i>Bookings Calendar
+        </h5>
+        <a href="@Url.Action("Index", "AdminBookings")"
+           class="btn btn-light btn-sm rounded-pill px-3 fw-semibold shadow-sm">
+            <i class="fas fa-list me-1"></i> Manage Bookings
+        </a>
+    </div>
+
+    <div class="card-body bg-light p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <label for="yearFilter" class="me-2 fw-semibold text-secondary">
+                    <i class="fas fa-filter me-1"></i>Year:
+                </label>
+                <select id="yearFilter"
+                        class="form-select d-inline-block w-auto shadow-sm border rounded-pill"></select>
+            </div>
+        </div>
+
+        <div id="calendar"
+             class="rounded-3 shadow-sm border bg-white p-2"
+             style="min-height:550px;"></div>
+    </div>
+</div>
+
+<!-- Modal for Event Details -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="bookingModalLabel">
+                    <i class="fas fa-calendar-check me-2"></i>Booking Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="bookingDetailsContent"></div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="editBookingBtn" href="#" class="btn btn-primary">Edit Booking</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const yearFilter = document.getElementById('yearFilter');
+            const currentYear = new Date().getFullYear();
+
+            for (let y = currentYear; y <= 2030; y++) {
+                const option = document.createElement('option');
+                option.value = y;
+                option.text = y;
+                if (y === currentYear) option.selected = true;
+                yearFilter.appendChild(option);
+            }
+
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                height: 550,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                eventSources: [{
+                    url: '@Url.Action("GetBookingsForCalendar", "Admin")',
+                    method: 'GET',
+                    failure: function () {
+                        toastr.error('Failed to load bookings.');
+                    }
+                }],
+                eventClassNames: function (arg) {
+                    if (arg.event.extendedProps.status === 'Pending') return ['bg-warning', 'text-dark'];
+                    if (arg.event.extendedProps.status === 'Confirmed') return ['bg-success', 'text-white'];
+                    if (arg.event.extendedProps.status === 'Cancelled') return ['bg-danger', 'text-white'];
+                    return ['bg-primary', 'text-white'];
+                },
+                eventClick: function (info) {
+                    const event = info.event;
+                    document.getElementById('bookingDetailsContent').innerHTML = `
+                        <div class="mb-3">
+                            <h5 class="fw-bold">${event.title}</h5>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-calendar-day me-2 text-primary"></i>
+                                <strong>Date:</strong> ${event.start.toLocaleDateString()}
+                            </p>
+                            <p class ="text-muted mb-1">
+                                <i class ="fas fa-map-marker-alt me-2 text-success"></i>
+                                <strong>Location: </strong> ${event.extendedProps.location ? event.extendedProps.location : 'N/A'}
+                            </p>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-info-circle me-2 text-info"></i>
+                                <strong>Status:</strong> ${event.extendedProps.status}
+                            </p>
+                        </div>`;
+                    document.getElementById('editBookingBtn').href = '/AdminBookings/Edit/' + event.id;
+                    new bootstrap.Modal(document.getElementById('bookingModal')).show();
+                },
+                dayMaxEvents: 3,
+                nowIndicator: true
+            });
+
+            calendar.render();
+
+            yearFilter.addEventListener('change', function () {
+                const selectedYear = parseInt(this.value);
+                const newDate = new Date(selectedYear, 0, 1);
+                calendar.gotoDate(newDate);
+            });
+        });
+    </script>
+
+    <style>
+        /* Redesigned Summary Cards */
+        .dashboard-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+            .dashboard-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+            }
+
+        .dashboard-icon {
+            width: 55px;
+            height: 55px;
+            flex-shrink: 0;
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #facc15, #eab308);
+        }
+
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+        }
+
+        /* Calendar Styles */
+        .fc .fc-toolbar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .fc-button {
+            border-radius: 50px !important;
+            font-size: 0.85rem;
+            padding: 4px 10px !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        #yearFilter {
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            min-width: 100px;
+            cursor: pointer;
+        }
+
+        .fc-daygrid-day:hover {
+            background-color: #f8fafc;
+        }
+
+        .fc-day-today {
+            background-color: rgba(59, 130, 246, 0.08) !important;
+        }
+
+        .fc-event {
+            border: none !important;
+            border-radius: 6px !important;
+            padding: 2px 5px !important;
+            font-size: 0.8rem !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+            .fc-event:hover {
+                transform: scale(1.03);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            }
+    </style>
+}

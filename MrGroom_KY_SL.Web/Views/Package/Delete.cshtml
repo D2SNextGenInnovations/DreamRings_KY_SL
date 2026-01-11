@@ -1,0 +1,196 @@
+﻿@model MrGroom_KY_SL.Models.Package
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Delete Package";
+}
+
+<div class="delete-user-wrapper py-5">
+    <div class="delete-user-card p-5 shadow-lg rounded-4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-gradient">
+                <i class="fas fa-exclamation-triangle me-2"></i> Delete Package
+            </h2>
+            <p class="text-muted">
+                You are about to permanently delete the following package. This action cannot be undone!
+            </p>
+        </div>
+
+        <div class="user-details mb-4">
+            <dl class="row">
+                <dt class="col-sm-4">Package Name</dt>
+                <dd class="col-sm-8 fw-semibold">@Model.Name</dd>
+
+                <dt class="col-sm-4">Description</dt>
+                <dd class="col-sm-8 fw-semibold">@Model.Description</dd>
+
+                <dt class="col-sm-4">Price (Rs)</dt>
+                <dd class="col-sm-8 fw-semibold">@Model.BasePrice</dd>
+            </dl>
+        </div>
+
+        @using (Html.BeginForm("Delete", "Package", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.PackageId)
+
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <button type="submit" class="btn btn-glow-danger px-5">
+                    <i class="fas fa-trash me-2"></i> Delete
+                </button>
+                <a href="@Url.Action("Index", "Package")" class="btn btn-glass px-5">
+                    Cancel
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0e7ff, #f5f3ff, #f0f9ff);
+            background-size: 300% 300%;
+            animation: bgShift 12s ease infinite;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+            color: #1e293b;
+        }
+
+        @@keyframes bgShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .delete-user-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .delete-user-card {
+            width: 100%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), inset 2px 2px 6px rgba(255, 255, 255, 0.6), inset -2px -2px 8px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.8s ease;
+        }
+
+            .delete-user-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, #ff4b5c, #ff758c, #ff4b5c);
+                animation: gradientFlow 6s linear infinite;
+            }
+
+        @@keyframes gradientFlow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #ff4b5c, #ff758c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        dl dt {
+            color: #6b7280;
+        }
+
+        dl dd {
+            color: #1e293b;
+        }
+
+        .btn {
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-glass {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1.5px solid rgba(255, 255, 255, 0.5);
+            color: #334155;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 8px rgba(255, 75, 108, 0.1);
+        }
+
+            .btn-glass:hover {
+                background: rgba(255, 75, 108, 0.15);
+                color: #1e293b;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(255, 75, 108, 0.25);
+            }
+
+        .btn-glow-danger {
+            background: linear-gradient(90deg, #ff4b5c, #ff758c);
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(255, 75, 108, 0.3);
+            animation: glowPulseDanger 3s ease-in-out infinite;
+        }
+
+            .btn-glow-danger:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(255, 75, 108, 0.4);
+            }
+
+        @@keyframes glowPulseDanger {
+            0%, 100% {
+                box-shadow: 0 0 8px rgba(255, 75, 108, 0.3), 0 0 16px rgba(255, 149, 167, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(255, 75, 108, 0.5), 0 0 30px rgba(255, 149, 167, 0.3);
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .delete-user-card {
+                padding: 2rem;
+            }
+        }
+    </style>
+}

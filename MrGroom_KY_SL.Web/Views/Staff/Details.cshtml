@@ -1,0 +1,263 @@
+﻿@model MrGroom_KY_SL.Models.Staff
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Staff Details";
+}
+
+<style>
+    /* ===== Modern Detail Page Styles ===== */
+    .staff-header {
+        background: linear-gradient(135deg, #0d6efd, #6610f2);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 10px 25px rgba(13, 110, 253, 0.25);
+    }
+
+        .staff-header h2 {
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+    .staff-meta {
+        color: #e0e0e0;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .section-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        color: #333;
+        border-left: 5px solid #0d6efd;
+        padding-left: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .card-modern {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        background-color: #fff;
+    }
+
+        .card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+        }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #f1f1f1;
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #0d6efd, #6610f2);
+        color: #fff;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #2b7bff, #7e3ff2);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+    .divider {
+        border-bottom: 2px dashed #ddd;
+        margin: 2rem 0;
+    }
+
+    .no-data {
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+
+    .booking-info strong {
+        color: #333;
+        min-width: 130px;
+    }
+
+    .booking-info span {
+        text-align: right;
+        flex: 1;
+        color: #555;
+    }
+
+    .card-modern {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e0e0e0;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .card-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+</style>
+
+<div class="container py-5">
+    <!-- Header -->
+    <div class="staff-header mb-5 d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h2><i class="bi bi-person-circle me-2"></i> @Model.Name</h2>
+
+            <div class="staff-meta d-flex flex-column mt-2">
+                <div>
+                    <strong>Role:</strong> @Model.Role
+                </div>
+
+                @if (Model.CreatedAt != null)
+                {
+                    <div>
+                        <strong>Joined:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd")
+                    </div>
+                }
+
+                <div class="mt-1">
+                    <strong>Status</strong>
+                    @if (Model.IsActive == true)
+                    {
+                        <span class="badge bg-success ms-1">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger ms-1">Inactive</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <a href="@Url.Action("Index", "Staff")" class="btn btn-light rounded-pill px-4 mt-3 mt-md-0">
+            <i class="bi bi-arrow-left-circle me-1"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Basic Information -->
+    <h5 class="section-title"><i class="bi bi-person-lines-fill me-2"></i> Basic Information</h5>
+    <div class="card-modern mb-5 p-4">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-secondary fw-semibold">Name</dt>
+                    <dd class="col-sm-7">@Model.Name</dd>
+
+                    <dt class="col-sm-5 text-secondary fw-semibold">Role</dt>
+                    <dd class="col-sm-7">@Model.Role</dd>
+
+                    <dt class="col-sm-5 text-secondary fw-semibold">Status</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge @(Model.IsActive == true ? "bg-success" : "bg-danger") ms-1">
+                            @(Model.IsActive == true ? "Active" : "Inactive")
+                        </span>
+                    </dd>
+                </dl>
+            </div>
+
+
+            <div class="col-md-6">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 fw-medium text-secondary"><strong>Created Date</strong></dt>
+                    <dd class="col-sm-7">@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
+
+                    <dt class="col-sm-5 fw-medium text-secondary"><strong>Last Updated</strong></dt>
+                    <dd class="col-sm-7">@DateTime.Now.ToString("yyyy-MM-dd")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Contact Details -->
+    <h5 class="section-title"><i class="bi bi-envelope-paper-fill me-2"></i> Contact Details</h5>
+    <div class="card-modern mb-5 p-4">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 fw-medium text-secondary"><strong>Email</strong></dt>
+                    <dd class="col-sm-7">@Model.Email</dd>
+                </dl>
+            </div>
+
+            <div class="col-md-6">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 fw-medium text-secondary"><strong>Phone</strong></dt>
+                    <dd class="col-sm-7">@Model.Phone</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Bookings -->
+    <h5 class="section-title mb-4">
+        <i class="bi bi-calendar-check-fill me-2"></i> Bookings
+    </h5>
+
+    @if (Model.Bookings != null && Model.Bookings.Any())
+    {
+        <div class="row g-4 mb-5">
+            @foreach (var booking in Model.Bookings)
+            {
+                <div class="col-md-6">
+                    <div class="card-modern p-4 h-100">
+                        <div class="booking-info">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Booking ID:</strong>
+                                <span>@booking.BookingId</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Event Date:</strong>
+                                <span>@booking.EventDate.ToString("yyyy-MM-dd")</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Customer:</strong>
+                                <span>@(booking.Customer != null ? (booking.Customer.FirstName + " " + booking.Customer.LastName) : "N/A")</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Event:</strong>
+                                <span>@(booking.EventType != null ? booking.EventType.Name : "N/A")</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>Status:</strong>
+                                <span>@booking.Status</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <strong>Payment:</strong>
+                                <span>@booking.PaymentStatus</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="no-data mb-5 text-muted text-center">
+            <i class="bi bi-info-circle me-2"></i> No bookings available.
+        </div>
+    }
+
+    <div class="text-center mt-5">
+        <a href="@Url.Action("Index", "Staff")" class="btn btn-gradient rounded-pill px-5 py-2">
+            <i class="bi bi-arrow-left-circle me-2"></i> Back to List
+        </a>
+    </div>
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+}

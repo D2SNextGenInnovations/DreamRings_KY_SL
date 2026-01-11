@@ -1,0 +1,141 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Models.Customer>
+
+@{
+    bool isManageMode = Request.QueryString["manage"] == "true";
+}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-address-book me-2 text-primary"></i>Customer List
+        </h5>
+    </div>
+
+    <div class="card-body">
+        <div class="d-flex justify-content-end gap-2 mb-3">
+            <a href="@Url.Action("ExportExcel", "Customer")"
+               class="btn btn-sm btn-success"
+               data-bs-toggle="tooltip"
+               title="Export to Excel">
+                <i class="bi bi-file-earmark-spreadsheet"></i>
+            </a>
+
+            <a href="@Url.Action("ExportPdf", "Customer")"
+               class="btn btn-sm btn-danger"
+               data-bs-toggle="tooltip"
+               title="Export to PDF">
+                <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+
+            @if (!isManageMode)
+            {
+                <a href="@Url.Action("Index", "Customer", new { manage = "true" })"
+                   class="btn btn-sm btn-outline-primary ajax-page"
+                   data-bs-toggle="tooltip"
+                   title="Manage Items">
+                    <i class="bi bi-sliders"></i>
+                </a>
+            }
+            else
+            {
+                <a href="@Url.Action("Index", "Customer")"
+                   class="btn btn-sm btn-outline-secondary ajax-page"
+                   data-bs-toggle="tooltip"
+                   title="Back to View">
+                    <i class="bi bi-arrow-left-circle"></i>
+                </a>
+            }
+        </div>
+
+        <script>
+            // Enable Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        </script>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle simple-table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th class="text-center">Created</th>
+                        <th class="text-center">View</th>
+                        @if (isManageMode)
+                        {
+                            <th class="text-center">Actions</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="@(isManageMode ? 7 : 6)" class="text-center text-muted py-4">No customers found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var c in Model)
+                        {
+                            var city = c.Addresses?.FirstOrDefault(a => a.IsPrimary)?.City
+                                       ?? c.Addresses?.FirstOrDefault()?.City ?? "N/A";
+
+                            <tr>
+                                <td>@c.FirstName @c.LastName</td>
+                                <td>@(string.IsNullOrEmpty(c.Email) ? "N/A" : c.Email)</td>
+                                <td>@(string.IsNullOrEmpty(c.Phone) ? "N/A" : c.Phone)</td>
+                                <td>@city</td>
+                                <td class="text-center">@c.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="text-center">
+                                    <a href="@Url.Action("Details", "Customer", new { id = c.CustomerId })" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                                @if (isManageMode)
+                                {
+                                    <td class="text-center">
+                                        <a href="@Url.Action("Edit", "Customer", new { id = c.CustomerId })" class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="@Url.Action("Delete", "Customer", new { id = c.CustomerId })" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- PAGINATION -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="d-flex justify-content-end mt-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(ViewBag.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1, searchTerm = ViewBag.SearchTerm, manage = isManageMode ? "true" : null })">&laquo; Prev</a>
+                </li>
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    string activeClass = i == ViewBag.CurrentPage ? "active" : "";
+                    <li class="page-item @activeClass">
+                        <a class="page-link ajax-page" href="@Url.Action("Index", new { page = i, searchTerm = ViewBag.SearchTerm, manage = isManageMode ? "true" : null })">@i</a>
+                    </li>
+                }
+                <li class="page-item @(ViewBag.CurrentPage == ViewBag.TotalPages ? "disabled" : "")">
+                    <a class="page-link ajax-page" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1, searchTerm = ViewBag.SearchTerm, manage = isManageMode ? "true" : null })">Next &raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

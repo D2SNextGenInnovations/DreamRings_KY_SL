@@ -1,0 +1,135 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Models.Package>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Admin - Packages";
+    bool isManageMode = Request.QueryString["manage"] == "true";
+    <link href="~/Content/custom-styles.css" rel="stylesheet" />;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="page-header-icon">
+            <i class="fas fa-boxes"></i>
+        </div>
+        <h3 class="page-title mb-0">Packages</h3>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- SUMMARY CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-primary text-white me-3">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Total Packages</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Count()</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-success text-white me-3">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Active Packages</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Count(p => p.IsActive)</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-warning text-dark me-3">
+                    <i class="fas fa-pause-circle"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Inactive Packages</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Count(p => !p.IsActive)</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-info text-white me-3">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Total Value (Rs)</h6>
+                    <h3 class="mb-0 fw-bold">@Model.Sum(p => p.BasePrice).ToString("N2")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- SEARCH + CREATE -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    @using (Html.BeginForm("Index", "Package", FormMethod.Get))
+    {
+        <div class="search-bar-soft d-flex align-items-center">
+            <input type="text" name="searchTerm" placeholder="Search packages..." value="@ViewBag.SearchTerm" />
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </div>
+    }
+
+    <a href="@Url.Action("Create", "Package")" class="fab-btn-inline">
+        <i class="fas fa-plus"></i>
+        <span class="ms-2">Create New Package</span>
+    </a>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- TABLE + PAGINATION -->
+<div id="packageContainer">
+    @Html.Partial("_PackageTable", Model)
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on("click", ".ajax-page", function (e) {
+            e.preventDefault();
+            var url = $(this).attr("href");
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "html",
+                beforeSend: function () {
+                    $("#packageContainer").css("opacity", "0.6");
+                },
+                success: function (data) {
+                    if ($(data).find("#packageContainer").length) {
+                        $("#packageContainer").html($(data).find("#packageContainer").html());
+                    } else {
+                        $("#packageContainer").html(data);
+                    }
+                    $("#packageContainer").css("opacity", "1");
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                },
+                error: function () {
+                    alert("Failed to load data. Please try again.");
+                    $("#packageContainer").css("opacity", "1");
+                }
+            });
+        });
+    </script>
+}
