@@ -316,7 +316,7 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                 if (isCanceled)
                 {
-                    existingBooking.Status = "Canceled";
+                    existingBooking.Status = "Cancelled";
 
                     _bookingService.Update(existingBooking, SelectedStaffIds);
 

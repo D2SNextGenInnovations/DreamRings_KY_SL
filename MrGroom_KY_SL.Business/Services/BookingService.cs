@@ -124,103 +124,159 @@ namespace MrGroom_KY_SL.Business.Services
 
         public void Update(Booking booking, int[] staffIds)
         {
-            try
+            if (booking == null)
+                throw new ArgumentNullException(nameof(booking), "Booking object cannot be null.");
+
+            if (staffIds == null || staffIds.Length == 0)
+                throw new ArgumentException("You must assign at least one staff member.", nameof(staffIds));
+
+            // Load booking with staff
+            var existing = _unitOfWork.BookingRepository
+                .GetAll()
+                .Include(b => b.StaffMembers)
+                .FirstOrDefault(b => b.BookingId == booking.BookingId);
+
+            if (existing == null)
+                throw new KeyNotFoundException($"Booking with ID {booking.BookingId} was not found.");
+
+            // -----------------------------
+            // Update booking basic fields
+            // -----------------------------
+            existing.CustomerId = booking.CustomerId;
+            existing.PackageId = booking.PackageId;
+            existing.EventTypeId = booking.EventTypeId;
+            existing.EventDate = booking.EventDate;
+            existing.BookingDate = booking.BookingDate != DateTime.MinValue
+                ? booking.BookingDate
+                : existing.BookingDate;
+            existing.Notes = booking.Notes;
+            existing.Status = string.IsNullOrWhiteSpace(booking.Status)
+                ? existing.Status
+                : booking.Status;
+
+            // -----------------------------
+            // Update Staff (EF handles join table)
+            // -----------------------------
+            var staffToAssign = _unitOfWork.StaffRepository
+                .GetAll()
+                .Where(s => staffIds.Contains(s.StaffId))
+                .ToList();
+
+            if (!staffToAssign.Any())
+                throw new InvalidOperationException("No matching staff members found.");
+
+            // Clear old staff
+            existing.StaffMembers.Clear();
+
+            // Assign new staff
+            foreach (var staff in staffToAssign)
             {
-                if (booking == null)
-                    throw new ArgumentNullException(nameof(booking), "Booking object cannot be null.");
-
-                if (staffIds == null || staffIds.Length == 0)
-                    throw new ArgumentException("You must assign at least one staff member.", nameof(staffIds));
-
-                var existing = _unitOfWork.BookingRepository.GetAll()
-                    .Include(b => b.StaffMembers)
-                    .FirstOrDefault(b => b.BookingId == booking.BookingId);
-
-                if (existing == null)
-                    throw new KeyNotFoundException($"Booking with ID {booking.BookingId} was not found.");
-
-                // Update base info
-                existing.CustomerId = booking.CustomerId;
-                existing.PackageId = booking.PackageId;
-                existing.EventTypeId = booking.EventTypeId;
-                existing.EventDate = booking.EventDate;
-                existing.BookingDate = booking.BookingDate != DateTime.MinValue
-                    ? booking.BookingDate
-                    : DateTime.UtcNow;
-                existing.Notes = booking.Notes;
-                existing.Status = string.IsNullOrWhiteSpace(booking.Status) ? "Pending" : booking.Status;
-
-                // Update staff members
-                var staffToAssign = _unitOfWork.StaffRepository
-                    .GetAll()
-                    .Where(s => staffIds.Contains(s.StaffId))
-                    .ToList();
-
-                if (staffToAssign == null || staffToAssign.Count == 0)
-                    throw new InvalidOperationException("No matching staff members found for the given IDs.");
-
-                //existing.StaffMembers = staffToAssign;
-                // Remove old relations
-                var oldRelations = _unitOfWork.BookingStaffRepository
-                                  .GetAll()
-                                  .Where(bs => bs.BookingId == existing.BookingId)
-                                  .ToList();
-
-                foreach (var rel in oldRelations)
-                    _unitOfWork.BookingStaffRepository.Delete(rel);
-
-                // Add new relations
-                foreach (var staffId in staffIds)
-                {
-                    _unitOfWork.BookingStaffRepository.Insert(new BookingStaff
-                    {
-                        BookingId = existing.BookingId,
-                        StaffId = staffId
-                    });
-                }
-
-                _unitOfWork.Save();
+                existing.StaffMembers.Add(staff);
             }
-            catch (ArgumentNullException)
-            {
-                // Let the caller handle argument exceptions
-                throw;
-            }
-            catch (ArgumentException)
-            {
-                // Let the caller handle invalid argument exceptions
-                throw;
-            }
-            catch (KeyNotFoundException)
-            {
-                // Let the caller handle not-found exceptions
-                throw;
-            }
-            catch (DbEntityValidationException ex)
-            {
-                // Handles EF validation errors (if using EF6)
-                var errors = ex.EntityValidationErrors
-                    .SelectMany(e => e.ValidationErrors)
-                    .Select(e => $"{e.PropertyName}: {e.ErrorMessage}");
-                var errorMessage = "Entity validation failed - " + string.Join("; ", errors);
-                throw new Exception(errorMessage, ex);
-            }
-            catch (DbUpdateException ex)
-            {
-                // Handles EF update/database constraint errors
-                throw new Exception("Database update failed while saving booking. Check relational constraints or data validity.", ex);
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Handles invalid state in LINQ/EF operations
-                throw new Exception("Invalid operation detected during booking update: " + ex.Message, ex);
-            }
-            catch (Exception ex)
-            {
-                // Fallback for any unexpected errors
-                throw new Exception("An unexpected error occurred while updating the booking: " + ex.Message, ex);
-            }
+
+            // Save changes
+            _unitOfWork.Save();
         }
+
+        //public void Update(Booking booking, int[] staffIds)
+        //{
+        //    try
+        //    {
+        //        if (booking == null)
+        //            throw new ArgumentNullException(nameof(booking), "Booking object cannot be null.");
+
+        //        if (staffIds == null || staffIds.Length == 0)
+        //            throw new ArgumentException("You must assign at least one staff member.", nameof(staffIds));
+
+        //        var existing = _unitOfWork.BookingRepository.GetAll()
+        //            .Include(b => b.StaffMembers)
+        //            .FirstOrDefault(b => b.BookingId == booking.BookingId);
+
+        //        if (existing == null)
+        //            throw new KeyNotFoundException($"Booking with ID {booking.BookingId} was not found.");
+
+        //        // Update base info
+        //        existing.CustomerId = booking.CustomerId;
+        //        existing.PackageId = booking.PackageId;
+        //        existing.EventTypeId = booking.EventTypeId;
+        //        existing.EventDate = booking.EventDate;
+        //        existing.BookingDate = booking.BookingDate != DateTime.MinValue
+        //            ? booking.BookingDate
+        //            : DateTime.UtcNow;
+        //        existing.Notes = booking.Notes;
+        //        existing.Status = string.IsNullOrWhiteSpace(booking.Status) ? "Pending" : booking.Status;
+
+        //        // Update staff members
+        //        var staffToAssign = _unitOfWork.StaffRepository
+        //            .GetAll()
+        //            .Where(s => staffIds.Contains(s.StaffId))
+        //            .ToList();
+
+        //        if (staffToAssign == null || staffToAssign.Count == 0)
+        //            throw new InvalidOperationException("No matching staff members found for the given IDs.");
+
+        //        //existing.StaffMembers = staffToAssign;
+        //        // Remove old relations
+        //        var oldRelations = _unitOfWork.BookingStaffRepository
+        //                          .GetAll()
+        //                          .Where(bs => bs.BookingId == existing.BookingId)
+        //                          .ToList();
+
+        //        foreach (var rel in oldRelations)
+        //            _unitOfWork.BookingStaffRepository.Delete(rel);
+
+        //        // Add new relations
+        //        foreach (var staffId in staffIds)
+        //        {
+        //            _unitOfWork.BookingStaffRepository.Insert(new BookingStaff
+        //            {
+        //                BookingId = existing.BookingId,
+        //                StaffId = staffId
+        //            });
+        //        }
+
+        //        _unitOfWork.Save();
+        //    }
+        //    catch (ArgumentNullException)
+        //    {
+        //        // Let the caller handle argument exceptions
+        //        throw;
+        //    }
+        //    catch (ArgumentException)
+        //    {
+        //        // Let the caller handle invalid argument exceptions
+        //        throw;
+        //    }
+        //    catch (KeyNotFoundException)
+        //    {
+        //        // Let the caller handle not-found exceptions
+        //        throw;
+        //    }
+        //    catch (DbEntityValidationException ex)
+        //    {
+        //        // Handles EF validation errors (if using EF6)
+        //        var errors = ex.EntityValidationErrors
+        //            .SelectMany(e => e.ValidationErrors)
+        //            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}");
+        //        var errorMessage = "Entity validation failed - " + string.Join("; ", errors);
+        //        throw new Exception(errorMessage, ex);
+        //    }
+        //    catch (DbUpdateException ex)
+        //    {
+        //        // Handles EF update/database constraint errors
+        //        throw new Exception("Database update failed while saving booking. Check relational constraints or data validity.", ex);
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        // Handles invalid state in LINQ/EF operations
+        //        throw new Exception("Invalid operation detected during booking update: " + ex.Message, ex);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // Fallback for any unexpected errors
+        //        throw new Exception("An unexpected error occurred while updating the booking: " + ex.Message, ex);
+        //    }
+        //}
 
         public void Delete(int id)
         {
