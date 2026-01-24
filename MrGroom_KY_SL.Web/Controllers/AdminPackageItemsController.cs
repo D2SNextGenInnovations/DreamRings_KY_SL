@@ -289,12 +289,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                     }
 
                     ws.Cells.AutoFitColumns();
-
                     var bytes = package.GetAsByteArray();
-
-                    return File(bytes,
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        "PackageItems.xlsx");
+                    return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "PackageItems.xlsx");
                 }
             }
             catch (Exception ex)
@@ -304,7 +300,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                 return RedirectToAction("Index");
             }
         }
-
 
         public ActionResult ExportPdf()
         {
@@ -353,6 +348,5 @@ namespace MrGroom_KY_SL.Web.Controllers
                 return File(stream.ToArray(), "application/pdf", "PackageItems.pdf");
             }
         }
-
     }
 }

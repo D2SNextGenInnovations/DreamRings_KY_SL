@@ -75,11 +75,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                     attachment = _packagePdfService.GenerateSinglePackagePdf(pkg);
                     attachmentName = $"Package_{pkg.PackageId}.pdf";
                 }
-                //else // All packages
-                //{
-                //    attachment = _packagePdfService.GenerateAllPackagesPdf();
-                //    attachmentName = $"All_Packages_{DateTime.Now:yyyyMMddHHmmss}.pdf";
-                //}
 
                 var sendResults = new List<EmailSendResult>();
 

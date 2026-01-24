@@ -107,6 +107,7 @@
   <ItemGroup>
     <Compile Include="CustomExceptions\ExistingUnpaidBookingException.cs" />
     <Compile Include="CustomExceptions\ExistingUnpaidBookingWarningException.cs" />
+    <Compile Include="DTOs\BookingAddonDTO.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\AccountService.cs" />
     <Compile Include="Services\BookingService.cs" />

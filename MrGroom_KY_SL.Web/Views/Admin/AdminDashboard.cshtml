@@ -77,95 +77,131 @@
 
 <hr class="soft-gradient-line" />
 
-<!-- Booking Calendar Card -->
-<div class="card border-0 shadow-sm mb-5 rounded-4 overflow-hidden">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0 d-flex align-items-center">
-            <i class="fas fa-calendar-alt me-2"></i>Bookings Calendar
-        </h5>
-        <a href="@Url.Action("Index", "AdminBookings")"
-           class="btn btn-light btn-sm rounded-pill px-3 fw-semibold shadow-sm">
-            <i class="fas fa-list me-1"></i> Manage Bookings
-        </a>
+
+<!-- Calendar Header -->
+<div class="calendar-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <!-- Left: View Toggle -->
+    <div class="calendar-view-toggle btn-group">
+        <button type="button" class="btn btn-sm btn-outline-light active" id="btnCalendarView">
+            <i class="fas fa-calendar me-1"></i> Calendar
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-light" id="btnListView">
+            <i class="fas fa-list me-1"></i> List
+        </button>
     </div>
 
-    <div class="card-body bg-light p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <label for="yearFilter" class="me-2 fw-semibold text-secondary">
-                    <i class="fas fa-filter me-1"></i>Year:
-                </label>
-                <select id="yearFilter"
-                        class="form-select d-inline-block w-auto shadow-sm border rounded-pill"></select>
-            </div>
-        </div>
+    <!-- Center: Title -->
+    <div class="calendar-title text-white fw-semibold">
+        <span id="calendarTitle"></span>
+    </div>
 
-        <div id="calendar"
-             class="rounded-3 shadow-sm border bg-white p-2"
-             style="min-height:550px;"></div>
+    <!-- Right: Navigation -->
+    <div class="calendar-nav btn-group">
+        <button type="button" class="btn btn-sm btn-light" id="prevYear" title="Previous Year">«</button>
+        <button type="button" class="btn btn-sm btn-light" id="prevMonth" title="Previous Month">‹</button>
+        <button type="button" class="btn btn-sm btn-light" id="nextMonth" title="Next Month">›</button>
+        <button type="button" class="btn btn-sm btn-light" id="nextYear" title="Next Year">»</button>
     </div>
 </div>
 
-<!-- Modal for Event Details -->
+<!-- Calendar Container -->
+<div id="calendar" class="modern-calendar rounded-3 shadow-sm border bg-white p-2" style="min-height:550px;"></div>
+
+
+<!-- Redesigned Modal for Event Details -->
 <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="bookingModalLabel">
-                    <i class="fas fa-calendar-check me-2"></i>Booking Details
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+
+            <!-- Header -->
+            <div class="modal-header bg-gradient-primary text-white px-4 py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:40px;height:40px;">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" id="bookingModalLabel">Booking Details</h5>
+                        <small class="text-white-50">Appointment overview</small>
+                    </div>
+                </div>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
                         aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <div id="bookingDetailsContent"></div>
+
+            <!-- Body -->
+            <div class="modal-body bg-light px-4 py-4">
+                <div id="bookingDetailsContent"
+                     class="bg-white rounded-3 shadow-sm p-3">
+                    <!-- Filled dynamically -->
+                </div>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                <a id="editBookingBtn" href="#" class="btn btn-primary">Edit Booking</a>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between">
+                <button type="button"
+                        class="btn btn-outline-secondary rounded-pill px-4"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Close
+                </button>
+
+                <a id="editBookingBtn"
+                   href="#"
+                   class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="fas fa-pen me-1"></i> Edit Booking
+                </a>
             </div>
+
         </div>
     </div>
 </div>
+
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const yearFilter = document.getElementById('yearFilter');
-            const currentYear = new Date().getFullYear();
+        let calendar;
 
-            for (let y = currentYear; y <= 2030; y++) {
-                const option = document.createElement('option');
-                option.value = y;
-                option.text = y;
-                if (y === currentYear) option.selected = true;
-                yearFilter.appendChild(option);
-            }
+        document.addEventListener('DOMContentLoaded', function () {
 
             const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                height: 550,
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                height: 'auto',
+                headerToolbar: false,
+                fixedWeekCount: false,
+                dayMaxEvents: 3,
+
+                events: '@Url.Action("GetBookingsForCalendar", "Admin")',
+
+                eventDidMount: function (info) {
+                    const status = info.event.extendedProps.status;
+
+                    if (status === 'Confirmed') info.el.classList.add('event-confirmed');
+                    if (status === 'Pending') info.el.classList.add('event-pending');
+                    if (status === 'Cancelled') info.el.classList.add('event-cancelled');
+
+                    // Hover popover
+                    new bootstrap.Popover(info.el, {
+                        trigger: 'hover',
+                        placement: 'auto',
+                        html: true,
+                        content: `
+                            <div class="calendar-popover">
+                                <strong>${info.event.title}</strong><br/>
+                                <small>${info.event.start.toLocaleDateString()}</small>
+                            </div>
+                        `
+                    });
                 },
-                eventSources: [{
-                    url: '@Url.Action("GetBookingsForCalendar", "Admin")',
-                    method: 'GET',
-                    failure: function () {
-                        toastr.error('Failed to load bookings.');
-                    }
-                }],
-                eventClassNames: function (arg) {
-                    if (arg.event.extendedProps.status === 'Pending') return ['bg-warning', 'text-dark'];
-                    if (arg.event.extendedProps.status === 'Confirmed') return ['bg-success', 'text-white'];
-                    if (arg.event.extendedProps.status === 'Cancelled') return ['bg-danger', 'text-white'];
-                    return ['bg-primary', 'text-white'];
-                },
+
+                // Event click shows detailed modal
                 eventClick: function (info) {
                     const event = info.event;
+
                     document.getElementById('bookingDetailsContent').innerHTML = `
                         <div class="mb-3">
                             <h5 class="fw-bold">${event.title}</h5>
@@ -175,29 +211,57 @@
                             </p>
                             <p class ="text-muted mb-1">
                                 <i class ="fas fa-map-marker-alt me-2 text-success"></i>
-                                <strong>Location: </strong> ${event.extendedProps.location ? event.extendedProps.location : 'N/A'}
+                                <strong>Location:</strong> ${event.extendedProps.location || 'N/A'}
                             </p>
                             <p class="text-muted mb-1">
                                 <i class="fas fa-info-circle me-2 text-info"></i>
-                                <strong>Status:</strong> ${event.extendedProps.status}
+                                <strong>Status:</strong> ${event.extendedProps.status || 'N/A'}
                             </p>
-                        </div>`;
+                        </div>
+                    `;
+
                     document.getElementById('editBookingBtn').href = '/AdminBookings/Edit/' + event.id;
+
                     new bootstrap.Modal(document.getElementById('bookingModal')).show();
-                },
-                dayMaxEvents: 3,
-                nowIndicator: true
+                }
             });
 
             calendar.render();
+            updateTitle();
 
-            yearFilter.addEventListener('change', function () {
-                const selectedYear = parseInt(this.value);
-                const newDate = new Date(selectedYear, 0, 1);
-                calendar.gotoDate(newDate);
+            // Navigation buttons
+            $('#prevMonth').click(() => { calendar.prev(); updateTitle(); });
+            $('#nextMonth').click(() => { calendar.next(); updateTitle(); });
+            $('#prevYear').click(() => {
+                calendar.gotoDate(new Date(calendar.getDate().getFullYear() - 1, calendar.getDate().getMonth()));
+                updateTitle();
             });
+            $('#nextYear').click(() => {
+                calendar.gotoDate(new Date(calendar.getDate().getFullYear() + 1, calendar.getDate().getMonth()));
+                updateTitle();
+            });
+
+            // View toggle buttons
+            $('#btnListView').click(() => {
+                calendar.changeView('listMonth');
+                $('#btnListView').addClass('active');
+                $('#btnCalendarView').removeClass('active');
+            });
+            $('#btnCalendarView').click(() => {
+                calendar.changeView('dayGridMonth');
+                $('#btnCalendarView').addClass('active');
+                $('#btnListView').removeClass('active');
+            });
+
+            function updateTitle() {
+                document.getElementById('calendarTitle').innerText = calendar.view.title;
+            }
         });
     </script>
+}
+
+
+
 
     <style>
         /* Redesigned Summary Cards */
@@ -276,5 +340,82 @@
                 transform: scale(1.03);
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             }
+
+        /*Calendar*/
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #5aa6a6;
+            padding: 10px 15px;
+            border-radius: 8px 8px 0 0;
+            color: #fff;
+        }
+
+        .calendar-view-toggle .btn {
+            border-radius: 20px;
+        }
+
+        .calendar-view-toggle .active {
+            background: #fff;
+            color: #5aa6a6;
+            font-weight: 600;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #calendarTitle {
+            font-weight: 600;
+            padding: 0 10px;
+        }
+
+        .modern-calendar {
+            background: #fff;
+            border-radius: 0 0 8px 8px;
+            padding: 10px;
+        }
+
+        .fc-daygrid-day-frame {
+            padding: 6px;
+        }
+
+        .fc-daygrid-day-number {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .fc-event {
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            border: none;
+        }
+
+        .event-confirmed {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .event-pending {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .event-cancelled {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .calendar-popover {
+            font-size: 0.8rem;
+        }
+
+        .bg-gradient-primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
     </style>
 }

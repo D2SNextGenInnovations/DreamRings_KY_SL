@@ -128,6 +128,22 @@
     <Compile Include="Migrations\202601081920409_AddAssignedRoleToBookingStaffNew1.designer.cs">
       <DependentUpon>202601081920409_AddAssignedRoleToBookingStaffNew1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202601141124455_MakeEventTypeOptionalInBooking.cs" />
+    <Compile Include="Migrations\202601141124455_MakeEventTypeOptionalInBooking.designer.cs">
+      <DependentUpon>202601141124455_MakeEventTypeOptionalInBooking.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202601151141181_AddBookingEventTypeManyToMany.cs" />
+    <Compile Include="Migrations\202601151141181_AddBookingEventTypeManyToMany.designer.cs">
+      <DependentUpon>202601151141181_AddBookingEventTypeManyToMany.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202601151629042_AddBookingAddons.cs" />
+    <Compile Include="Migrations\202601151629042_AddBookingAddons.designer.cs">
+      <DependentUpon>202601151629042_AddBookingAddons.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202601200149118_AddPreviousStatusToBookings.cs" />
+    <Compile Include="Migrations\202601200149118_AddPreviousStatusToBookings.designer.cs">
+      <DependentUpon>202601200149118_AddPreviousStatusToBookings.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\IRepository.cs" />
@@ -182,6 +198,18 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202601081920409_AddAssignedRoleToBookingStaffNew1.resx">
       <DependentUpon>202601081920409_AddAssignedRoleToBookingStaffNew1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601141124455_MakeEventTypeOptionalInBooking.resx">
+      <DependentUpon>202601141124455_MakeEventTypeOptionalInBooking.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601151141181_AddBookingEventTypeManyToMany.resx">
+      <DependentUpon>202601151141181_AddBookingEventTypeManyToMany.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601151629042_AddBookingAddons.resx">
+      <DependentUpon>202601151629042_AddBookingAddons.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601200149118_AddPreviousStatusToBookings.resx">
+      <DependentUpon>202601200149118_AddPreviousStatusToBookings.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -30,11 +30,9 @@ namespace MrGroom_KY_SL.Business.Services
                 Font bodyFont = FontFactory.GetFont(FontFactory.HELVETICA, 12);
                 Font priceFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 22);
                 Font nameFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
-                Font detailFont = FontFactory.GetFont(FontFactory.HELVETICA, 9); // slightly smaller font
+                Font detailFont = FontFactory.GetFont(FontFactory.HELVETICA, 9); // smaller font
 
-                // ===============================================================
                 // COMPANY HEADER (Logo left, details right aligned)
-                // ===============================================================
                 var companyInfoService = new CompanyInfoService();
                 var company = companyInfoService.GetAll().FirstOrDefault();
 
@@ -118,10 +116,8 @@ namespace MrGroom_KY_SL.Business.Services
                     pdfDoc.Add(new Paragraph("\n")); // space under header
                 }
 
-                // ===============================================================
-                // BEGIN PACKAGE CONTENT
-                // ===============================================================
 
+                // BEGIN PACKAGE CONTENT
                 pdfDoc.Add(new Paragraph("\n"));
 
                 // PACKAGE NAME

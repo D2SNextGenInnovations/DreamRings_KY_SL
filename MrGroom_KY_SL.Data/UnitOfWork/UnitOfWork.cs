@@ -24,6 +24,8 @@ namespace MrGroom_KY_SL.Data.UnitOfWork
         private Repository<PackagePhoto> _packagePhotoRepository;
         private Repository<EmailHistory> _emailHistoryRepository;
         private Repository<CompanyInfo> _companyInfoRepository;
+        private Repository<BookingEventType> _bookingEventTypeRepository;
+        private Repository<BookingAddon> _bookingAddonRepository;
 
         public UnitOfWork()
         {
@@ -43,6 +45,9 @@ namespace MrGroom_KY_SL.Data.UnitOfWork
         public Repository<PackagePhoto> PackagePhotoRepository => _packagePhotoRepository ?? (_packagePhotoRepository = new Repository<PackagePhoto>(_context));
         public Repository<EmailHistory> EmailHistoryRepository => _emailHistoryRepository ?? (_emailHistoryRepository = new Repository<EmailHistory>(_context));
         public Repository<CompanyInfo> CompanyInfoRepository => _companyInfoRepository ?? (_companyInfoRepository = new Repository<CompanyInfo>(_context));
+        public Repository<BookingEventType> BookingEventTypeRepository => _bookingEventTypeRepository ?? (_bookingEventTypeRepository = new Repository<BookingEventType>(_context));
+        public Repository<BookingAddon> BookingAddonRepository => _bookingAddonRepository ?? (_bookingAddonRepository = new Repository<BookingAddon>(_context));
+
 
         public AppDbContext Context => _context;
         public void Save() => _context.SaveChanges();

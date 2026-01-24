@@ -34,6 +34,9 @@ namespace MrGroom_KY_SL.Data
         public DbSet<PackageEventType> PackageEventTypes { get; set; }
         public DbSet<EmailHistory> EmailHistories { get; set; }
         public DbSet<CompanyInfo> CompanyInfos { get; set; }
+        public DbSet<BookingEventType> BookingEventTypes { get; set; }
+        public DbSet<BookingAddon> BookingAddons { get; set; }
+
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

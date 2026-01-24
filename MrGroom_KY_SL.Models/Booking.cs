@@ -20,12 +20,6 @@ namespace MrGroom_KY_SL.Models
 
         public virtual Customer Customer { get; set; }
 
-        [ForeignKey("EventType")]
-        [Required(ErrorMessage = "Event type is required")]
-        public int EventTypeId { get; set; }
-
-        public virtual EventType EventType { get; set; }
-
         [ForeignKey("Package")]
         [Required(ErrorMessage = "Package is required")]
         public int PackageId { get; set; }
@@ -40,10 +34,12 @@ namespace MrGroom_KY_SL.Models
 
         [StringLength(50)]
         public string Status { get; set; } = "Pending";
+        [StringLength(50)]
+        public string PreviousStatus { get; set; }
+
         public string Notes { get; set; }
 
         public virtual ICollection<Payment> Payments { get; set; }
-
 
         [NotMapped]
         [Display(Name = "Assigned Staff")]
@@ -70,6 +66,19 @@ namespace MrGroom_KY_SL.Models
                 return "Partial";
             }
         }
+
+        public virtual ICollection<BookingEventType> BookingEventTypes { get; set; } = new List<BookingEventType>();
+
+        [NotMapped]
+        public int[] SelectedEventTypeIds { get; set; }
+
+        public virtual ICollection<BookingAddon> BookingAddons { get; set; } = new List<BookingAddon>();
+
+        [NotMapped]
+        public decimal AddonsTotal => BookingAddons?.Sum(a => a.Quantity * a.UnitPrice) ?? 0;
+
+        [NotMapped]
+        public decimal GrandTotal => (Package?.BasePrice ?? 0) + BookingEventTypes.Sum(e => e.EventType.Price) + AddonsTotal;
 
     }
 }

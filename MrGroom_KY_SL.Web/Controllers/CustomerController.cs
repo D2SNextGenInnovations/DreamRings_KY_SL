@@ -243,7 +243,6 @@ namespace MrGroom_KY_SL.Web.Controllers
             }
         }
 
-
         // Details
         public ActionResult Details(int id)
         {
@@ -269,7 +268,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                 TempData["ToastrMessage"] = "Customer not found.";
                 return RedirectToAction("Index");
             }
-
             return View(customer);
         }
 
@@ -289,7 +287,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                 TempData["ToastrType"] = "error";
                 TempData["ToastrMessage"] = "Error deleting customer.";
             }
-
             return RedirectToAction("Index");
         }
 
@@ -345,7 +342,6 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                         row++;
                     }
-
                     ws.Cells.AutoFitColumns();
 
                     var bytes = package.GetAsByteArray();

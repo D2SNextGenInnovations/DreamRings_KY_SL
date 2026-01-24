@@ -1,4 +1,6 @@
-﻿@model MrGroom_KY_SL.Models.Booking
+﻿@*@model MrGroom_KY_SL.Models.Booking*@
+@model MrGroom_KY_SL.Web.Models.BookingCreateViewModel
+@using MrGroom_KY_SL.Web.Models
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.Title = "Create Booking";
@@ -39,16 +41,18 @@
                 @Html.ValidationMessageFor(m => m.PackageId, "", new { @class = "text-danger small" })
             </div>
 
-            <!-- Event Type -->
-            <div class="form-group mb-4">
-                <label class="form-label fw-semibold">Event Type</label>
-                <div class="input-group">
-                    <span class="input-group-text icon-gradient"><i class="bi bi-calendar-event"></i></span>
-                    @*@Html.DropDownListFor(m => m.EventTypeId, (SelectList)ViewBag.EventTypeId, "- Select Event Type -", new { @class = "form-control" })*@
-                    @Html.DropDownListFor(m => m.EventTypeId, (SelectList)ViewBag.EventTypes, "- Select Event Type -", new { @class = "form-control" })
+            <div id="packageIncludes"
+                 class="border rounded-3 p-3 mt-2 mb-4 bg-light d-none">
+
+
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-check2-circle text-success me-2"></i>
+                    <small class="fw-semibold text-muted">Package Includes</small>
                 </div>
-                @Html.ValidationMessageFor(m => m.EventTypeId, "", new { @class = "text-danger small" })
+
+                <div id="packageIncludesList"></div>
             </div>
+
 
             <!-- Event Date -->
             <div class="form-group mb-4">
@@ -73,118 +77,475 @@
             </div>
 
             <!-- Assign Staff -->
-            <div class="form-group mb-4">
-                <label class="form-label fw-semibold">Assign Staff (required)</label>
-                @*@Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.SelectedStaffIds, new { @class = "form-control", size = 6 })*@
-                @Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })
-                @Html.ValidationMessageFor(m => m.SelectedStaffIds, "", new { @class = "text-danger small" })
-            </div>
+                <div class="form-group mb-4">
+                    <label class="form-label fw-semibold">Assign Staff (required)</label>
+                    @*@Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.SelectedStaffIds, new { @class = "form-control", size = 6 })*@
+                    @Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })
+                    @Html.ValidationMessageFor(m => m.SelectedStaffIds, "", new { @class = "text-danger small" })
+                </div>
+
+            <!-- Toggle Button -->
+                <div class="mb-4 text-center">
+                    <button type="button"
+                            id="btnToggleAddons"
+                            class="btn btn-glow px-4 py-2">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add Extras (Event Types & Items)
+                    </button>
+                </div>
+
+           <!-- Addons section-->
+                <div id="addonsSection" style="display:none;">
+
+                    <div class="card shadow-sm border-0 mt-4">
+                        <div class="card-body">
+
+                            <h5 class="fw-bold mb-3">
+                                <i class="bi bi-stars text-primary me-2"></i>
+                                Addons
+                            </h5>
+                            <p class="text-muted small mb-4">
+                                Select event types (one-time) and optional add-on items (per unit) to enhance the booking.
+                            </p>
+
+                            @{
+                                var index = 0;
+                            }
+
+                            <div class="list-group list-group-flush">
+
+                                <!-- Event Types-->
+                                @if (ViewBag.EventTypes != null && ((IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes).Any())
+                                {
+                                    <div class="list-group-item bg-primary text-white fw-bold">
+                                        Event Types
+                                    </div>
+
+                                    foreach (var et in (IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes)
+                                    {
+                                        <label class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="fw-semibold">@et.Name</div>
+                                                <small class="text-muted">One-time charge</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold">Rs @et.Price</div>
+
+                                                <input type="checkbox"
+                                                       class="form-check-input mt-1 event-type-checkbox"
+                                                       name="SelectedEventTypeIds"
+                                                       value="@et.EventTypeId"
+                                                       data-eventtype-id="@et.EventTypeId" />
+                                            </div>
+                                        </label>
+                                    }
+                                }
+
+                                <!-- Addons-->
+                                @if (ViewBag.PackageItems != null && ((IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems).Any())
+                                {
+                                    <div class="list-group-item bg-success text-white fw-bold mt-3">
+                                        Package Items
+                                    </div>
+
+                                    foreach (var item in (IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems)
+                                    {
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="fw-semibold">@item.Name</div>
+                                                <small class="text-muted">Per unit</small>
+                                            </div>
+                                            <div class="text-end d-flex align-items-center gap-2">
+                                                <div class="fw-bold">Rs @item.Price</div>
+                                                <input type="number"
+                                                       class="form-control form-control-sm text-center addon-qty"
+                                                       data-packageitem-id="@item.PackageItemId"
+                                                       name="SelectedAddons[@index].Quantity"
+                                                       value="0"
+                                                       min="0"
+                                                       style="width:70px" />
+
+                                                <input type="hidden"
+                                                       name="SelectedAddons[@index].PackageItemId"
+                                                       value="@item.PackageItemId" />
+                                            </div>
+                                        </div>
+                                        index++;
+                                    }
+                                }
+
+                            </div>
+
+                            @Html.ValidationMessageFor(m => m.SelectedEventTypeIds, "", new { @class = "text-danger small mt-3 d-block" })
+
+                        </div>
+                    </div>
+                </div>
 
             <!-- Buttons -->
-            <div class="text-end mt-5 d-flex justify-content-end gap-3">
-                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
-                <button type="submit" class="btn btn-glow px-4">
-                    <i class="bi bi-save"></i> Create
-                </button>
-            </div>
-        }
+                                <div class="text-end mt-5 d-flex justify-content-end gap-3">
+                                    @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
+                                    <button type="submit" id="btnCreateBooking" class="btn btn-glow px-4">
+                                        <i class="bi bi-save"></i> Create
+                                    </button>
+                                </div>
+                                }
     </div>
 </div>
 
 <!--Payment Modal -->
 <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content p-3">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="paymentModalLabel">Complete Payment</h5>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="paymentModalLabel">
+                    <i class="bi bi-credit-card-2-front me-2 text-primary"></i>
+                    Complete Payment
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+
+            <div class="modal-body p-4">
+
+                <!-- Customer Name -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body d-flex align-items-center">
+                        <i class="bi bi-person-circle fs-3 text-primary me-3"></i>
+                        <div>
+                            <div class="text-muted small">Customer</div>
+                            <div class="fw-bold fs-5" id="paymentCustomer">—</div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Booking Summary -->
-                <div class="booking-summary-pills mb-3">
-                    <div class="pill-row">
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body py-3 px-3">
 
-                        <div class="pill">
-                            <small class="pill-label">Customer</small>
-                            <div id="paymentCustomer" class="pill-value">—</div>
+                        <h6 class="fw-semibold text-muted mb-2" style="font-size:0.85rem;">
+                            <i class="bi bi-receipt me-1 text-info"></i>
+                            Booking Summary
+                        </h6>
+
+                        <!-- Event Types -->
+                        <div id="paymentEventTypesSection" class="mb-2">
+                            <div class="fw-semibold text-secondary mb-1" style="font-size:0.8rem;">
+                                Event Types
+                            </div>
+                            <ul class="list-group list-group-flush small" id="paymentEventTypesList"></ul>
                         </div>
 
-                        <div class="pill">
-                            <small class="pill-label">Full</small>
-                            <div class="pill-value">$<span id="paymentFullAmount">0.00</span></div>
-                        </div>
-
-                        <div class="pill">
-                            <small class="pill-label">Paid</small>
-                            <div class="pill-value">$<span id="paymentPrevPaid">0.00</span></div>
-                        </div>
-
-                        <div class="pill">
-                            <small class="pill-label">Balance</small>
-                            <div class="pill-value">$<span id="paymentBalance">0.00</span></div>
+                        <!-- Add-ons -->
+                        <div id="paymentAddonsSection">
+                            <div class="fw-semibold text-secondary mb-1" style="font-size:0.8rem;">
+                                Add-ons
+                            </div>
+                            <ul class="list-group list-group-flush small" id="paymentAddonsList"></ul>
                         </div>
 
                     </div>
                 </div>
 
 
+                <!-- Package & Add-ons Amount Info -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
 
-                <form id="paymentForm">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="BookingId" id="paymentBookingId" />
+                        <h6 class="fw-bold text-uppercase text-muted mb-3">
+                            <i class="bi bi-cash-stack me-2 text-success"></i>
+                            Amount Summary
+                        </h6>
 
-                    <div class="mb-3">
-                        <label class="form-label">Payment Amount</label>
-                        <input type="number" name="Amount" id="paymentAmount" class="form-control" step="0.01" required />
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Package Amount</span>
+                            <span class="fw-semibold">
+                                Rs <span id="packageAmount">0.00</span>
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Add-ons Amount</span>
+                            <span class="fw-semibold">
+                                Rs <span id="paymentTotAddonsAmount">0.00</span>
+                            </span>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-semibold">Total Amount</span>
+                            <span class="fw-bold fs-6">
+                                Rs <span id="paymentFullAmount">0.00</span>
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span>Previously Paid</span>
+                            <span class="fw-semibold">
+                                Rs <span id="paymentPrevPaid">0.00</span>
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light">
+                            <span class="fw-bold text-danger">Balance</span>
+                            <span class="fw-bold fs-5 text-danger">
+                                Rs <span id="paymentBalance">0.00</span>
+                            </span>
+                        </div>
+
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Payment Method</label>
-                        <input type="text" name="PaymentMethod" class="form-control" placeholder="e.g., Cash, Card" required />
-                    </div>
+                <!-- Payment Details -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
 
-                    <div class="mb-3">
-                        <label class="form-label">Payment Type</label>
-                        <select name="PaymentType" class="form-select" required>
-                            <option value="">- Select Type -</option>
-                            <option>Advance</option>
-                            <option>Half</option>
-                            <option>Full</option>
-                        </select>
-                    </div>
+                        <h6 class="fw-bold text-uppercase text-muted mb-3">
+                            <i class="bi bi-wallet2 me-2 text-primary"></i>
+                            Payment Details
+                        </h6>
 
-                    <div class="mb-3">
-                        <label class="form-label">Remarks</label>
-                        <textarea name="Remarks" class="form-control" rows="2"></textarea>
+                        <form id="paymentForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="BookingId" id="paymentBookingId" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Payment Amount</label>
+                                <input type="number"
+                                       name="Amount"
+                                       id="paymentAmount"
+                                       class="form-control"
+                                       step="0.01"
+                                       required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Payment Method</label>
+                                <input type="text"
+                                       name="PaymentMethod"
+                                       class="form-control"
+                                       placeholder="Cash, Card, Bank Transfer"
+                                       required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Payment Type</label>
+                                <select name="PaymentType" class="form-select" required>
+                                    <option value="">- Select Type -</option>
+                                    <option>Advance</option>
+                                    <option>Half</option>
+                                    <option>Full</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Remarks</label>
+                                <textarea name="Remarks" class="form-control" rows="2"></textarea>
+                            </div>
+                        </form>
+
                     </div>
-                </form>
+                </div>
+
             </div>
 
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" id="btnSavePayment">Save Payment</button>
+            <div class="modal-footer bg-light">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary px-4" id="btnSavePayment">
+                    <i class="bi bi-save me-1"></i> Save Payment
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+
 @section Scripts {
     <script>
         $(function () {
 
-            function populatePaymentModal(res) {
-                // use safe defaults
-                var customer = res.customerName || res.customer || 'Unknown';
-                var full = parseFloat(res.fullAmount || 0) || 0;
-                var prev = parseFloat(res.prevPaid || 0) || 0;
-                var balance = (full - prev) || 0;
+            $('#btnToggleAddons').on('click', function () {
+                const section = $('#addonsSection');
+                section.slideToggle(200);
 
-                // fill pills (note: these IDs match the HTML above)
-                document.getElementById('paymentCustomer').textContent = customer;
-                document.getElementById('paymentFullAmount').textContent = full.toFixed(2);
-                document.getElementById('paymentPrevPaid').textContent = prev.toFixed(2);
-                document.getElementById('paymentBalance').textContent = balance.toFixed(2);
+                // Toggle button text
+                if (section.is(':visible')) {
+                    $(this).html('<i class="bi bi-dash-circle"></i> Hide Items / Event Types');
+                } else {
+                    $(this).html('<i class="bi bi-plus-circle"></i> Add Items / Event Types');
+                }
+            });
+
+        });
+
+        //button animation
+        function setButtonLoading(btn, loadingText) {
+            btn.data('original-text', btn.html());
+            btn.prop('disabled', true);
+            btn.html(`
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        ${loadingText}
+    `);
+        }
+
+        function resetButton(btn) {
+            btn.prop('disabled', false);
+            btn.html(btn.data('original-text'));
+        }
+        //
+
+
+        $('#PackageId').on('change', function () {
+
+            const packageId = $(this).val();
+
+            // If "- Select Package -"
+            if (!packageId) {
+                $('#packageIncludesList').empty();
+                $('#packageIncludes').addClass('d-none');
+                return;
+            }
+
+            // Load includes only when a valid package is selected
+            loadPackageIncludes(packageId);
+        });
+
+        function loadPackageIncludes(packageId) {
+
+            if (!packageId) {
+                $('#packageIncludesList').empty();
+                $('#packageIncludes').addClass('d-none');
+                return;
+            }
+
+
+            $.get('/AdminBookings/GetPackageAddons', { packageId }, function (res) {
+
+                if (!res.success) return;
+
+                let html = '';
+
+                // Event Types
+                if (res.eventTypes && res.eventTypes.length) {
+
+                    html += `
+                <div class="package-section">
+                    <div class="package-section-title">Event Types</div>
+                    <div class="package-chips">
+            `;
+
+                    res.eventTypes.forEach(e => {
+                        html += `
+                    <span class="package-chip">
+                        ${e.name}
+                        <span class="chip-badge included">Included</span>
+                    </span>
+                `;
+                    });
+
+                    html += `</div></div>`;
+                }
+
+                // Items
+                if (res.items && res.items.length) {
+
+                    const validItems = res.items.filter(i => i.quantity > 0);
+                    if (validItems.length) {
+
+                        html += `
+                    <div class="package-section mt-2">
+                        <div class="package-section-title">Items</div>
+                        <div class="package-chips">
+                `;
+
+                        validItems.forEach(i => {
+                            html += `
+                        <span class="package-chip">
+                            ${i.name}
+                            <span class="chip-badge qty">Qty ${i.quantity}</span>
+                        </span>
+                    `;
+                        });
+
+                        html += `</div></div>`;
+                    }
+                }
+
+                $('#packageIncludesList').html(html);
+                $('#packageIncludes').removeClass('d-none');
+            });
+        }
+
+
+        $('#PackageId').on('change', function () {
+            const packageId = $(this).val();
+            if (packageId) {
+                loadPackageIncludes(packageId);
+            }
+        });
+
+        $(function () {
+
+            function populatePaymentModal(res) {
+
+                $('#paymentBookingId').val(res.bookingId);
+                $('#paymentCustomer').text(res.customerName);
+                $('#paymentFullAmount').text(formatCurrency(res.fullAmount));
+                $('#packageAmount').text(formatCurrency(res.packageAmount));
+                $('#paymentAddonsAmount').text(formatCurrency(res.addonsAmount));
+                $('#paymentPrevPaid').text(formatCurrency(res.prevPaid));
+                $('#paymentTotAddonsAmount').text(formatCurrency(res.totalAddonsAmount));
+
+
+                const balance = res.fullAmount - res.prevPaid;
+                $('#paymentBalance').text(formatCurrency(balance));
+
+                $('#paymentAmount').val(balance.toFixed(2));
+                $('#paymentForm').find('input[name="PaymentMethod"]').val(res.paymentMethod || '');
+                $('#paymentForm').find('select[name="PaymentType"]').val(res.paymentType || '');
+                $('#paymentForm').find('textarea[name="Remarks"]').val(res.remarks || '');
+                // ===============================
+                // EVENT TYPES (FROM DB)
+                // ===============================
+                const $eventList = $('#paymentEventTypesList').empty();
+
+                if (res.eventTypes && res.eventTypes.length) {
+                    res.eventTypes.forEach(e => {
+                        $eventList.append(`
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>${e.name} (x${e.qty})</span>
+                    <span>Rs ${formatCurrency(e.total)}</span>
+                </li>
+            `);
+                    });
+                } else {
+                    $eventList.append(`<li class="list-group-item text-muted">No event types</li>`);
+                }
+
+                // ===============================
+                // ADDONS (PACKAGE + EXTRA)
+                // ===============================
+                const $addonList = $('#paymentAddonsList').empty();
+
+                if (res.addons && res.addons.length) {
+                    res.addons.forEach(a => {
+                        $addonList.append(`
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>${a.name} (x${a.qty})</span>
+                    <span>Rs ${formatCurrency(a.total)}</span>
+                </li>
+            `);
+                    });
+                } else {
+                    $addonList.append(`<li class="list-group-item text-muted">No addons</li>`);
+                }
+            }
+
+            function formatCurrency(amount) {
+                return amount.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
 
                 // keep existing hidden booking id if provided
                 if (res.bookingId) {
@@ -201,38 +562,36 @@
             // Booking form submission via AJAX
             $('#bookingForm').on('submit', function (e) {
                 e.preventDefault();
-                const form = $(this);
+
+                const btn = $('#btnCreateBooking');
+                setButtonLoading(btn, 'Creating...');
 
                 $.ajax({
                     url: '@Url.Action("CreateAjax", "AdminBookings")',
                     type: 'POST',
-                    data: form.serialize(),
+                    data: $(this).serialize(),
                     success: function (res) {
 
-                        if (res.unpaid) {
-                            toastr.warning(res.message);
-                            setTimeout(() => {
-                                window.location.href = '/AdminBookings/Edit/' + res.bookingId;
-                            }, 1200);
+                        if (!res.success) {
+                            toastr.error(res.message);
                             return;
                         }
 
-                        if (res.success) {
-                            toastr.success(res.message);
-
-                            $('#paymentBookingId').val(res.bookingId);
-
-                            // Populate payment modal dynamically
+                        if (res.unpaid) {
                             populatePaymentModal(res);
 
-                            $('#paymentModal').modal('show');
+                            const modal = new bootstrap.Modal(
+                                document.getElementById('paymentModal')
+                            );
+                            modal.show();
                             return;
                         }
 
-                        toastr.warning(res.message || 'Please correct the errors.');
+                        toastr.success('Booking completed');
+                        window.location.href = '@Url.Action("Index", "AdminBookings")';
                     },
                     error: function () {
-                        toastr.error('Something went wrong while creating booking.');
+                        toastr.error('Error creating booking.');
                     }
                 });
             });
@@ -240,6 +599,9 @@
             // Save Payment via AJAX
             $('#btnSavePayment').on('click', function () {
                 const paymentData = $('#paymentForm').serialize();
+
+                const btn = $(this);
+                setButtonLoading(btn, 'Saving...');
 
                 $.ajax({
                     url: '@Url.Action("SavePayment", "AdminBookings")',
@@ -269,16 +631,24 @@
                 });
             });
 
-            // Optional: update remaining balance dynamically on amount input
+            //// Update remaining balance live
             $('#paymentAmount').on('input', function () {
-                const fullAmount = parseFloat($('#paymentFullAmount').text()) || 0;
-                const prevPaid = parseFloat($('#paymentPrevPaid').text()) || 0;
+                const fullAmount = parseCurrency($('#paymentFullAmount').text());
+                const prevPaid = parseCurrency($('#paymentPrevPaid').text());
                 const entered = parseFloat($(this).val()) || 0;
+
                 const remaining = fullAmount - prevPaid - entered;
-                $('#paymentBalance').text(remaining.toFixed(2));
+                $('#paymentBalance').text(formatCurrency(remaining));
             });
 
+            function parseCurrency(text) {
+                return parseFloat(
+                    text.replace(/[^0-9.-]+/g, '')
+                ) || 0;
+            }
+
         });
+
     </script>
 }
 
@@ -494,5 +864,74 @@
             font-weight: 600;
             color: #212529;
         }
+
+        .addon-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+            .addon-card:hover {
+                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+                transform: translateY(-2px);
+            }
+
+        .btn-glow {
+            background: linear-gradient(135deg, #6f42c1, #0d6efd);
+            color: #fff;
+            border: none;
+        }
+
+            .btn-glow:hover {
+                opacity: 0.95;
+            }
+
+
+        /* Package Includes – FIXED layout */
+
+        .package-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .package-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .package-chip {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            white-space: nowrap;
+        }
+
+        .chip-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+            .chip-badge.included {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .chip-badge.qty {
+                background: #e0f2fe;
+                color: #075985;
+            }
     </style>
 }

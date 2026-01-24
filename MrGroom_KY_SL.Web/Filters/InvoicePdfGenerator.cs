@@ -16,277 +16,295 @@ namespace MrGroom_KY_SL.Models
     {
         public static byte[] GenerateInvoice(Booking b)
         {
-            // Load company info (assuming only 1 row)
-
-           var companyInfo = new CompanyInfoService().GetAll().FirstOrDefault();
+            var companyInfo = new CompanyInfoService().GetAll().FirstOrDefault();
 
             using (MemoryStream ms = new MemoryStream())
             {
-                Document doc = new Document(PageSize.A4, 25, 25, 25, 25);
+                Document doc = new Document(PageSize.A4, 25, 25, 25, 30);
                 PdfWriter.GetInstance(doc, ms);
                 doc.Open();
-                decimal grandTotal = 0;
 
                 string fontPath = HttpContext.Current.Server.MapPath("~/Content/Fonts/seguisym.ttf");
                 BaseFont bf = BaseFont.CreateFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-                //Font bold14 = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 14);
-                //Font bold12 = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12);
-                //Font normal11 = FontFactory.GetFont(FontFactory.HELVETICA, 11);
 
-                Font normal11 = new Font(bf, 11, Font.NORMAL);
-                Font bold12 = new Font(bf, 12, Font.BOLD);
-                Font bold14 = new Font(bf, 14, Font.BOLD);
+                Font normal = new Font(bf, 9);
+                Font bold = new Font(bf, 9, Font.BOLD);
+                Font title = new Font(bf, 12, Font.BOLD);
+                Font footerBold = new Font(bf, 11, Font.BOLD);
 
-                BaseColor grey = new BaseColor(230, 230, 230);
+                BaseColor grey = new BaseColor(235, 235, 235);
 
                 // ---------------- HEADER ----------------
                 PdfPTable header = new PdfPTable(2);
                 header.WidthPercentage = 100;
                 header.SetWidths(new float[] { 60, 40 });
 
-                // LEFT SIDE (logo + company info)
-                PdfPTable leftBlock = new PdfPTable(1);
-                leftBlock.WidthPercentage = 100;
-
-                //string logoPath = HttpContext.Current.Server.MapPath("~/Content/Images/newReportLogo.png");
-                //if (File.Exists(logoPath))
-                //{
-                //    Image logo = Image.GetInstance(logoPath);
-                //    logo.ScaleAbsolute(240, 54);
-                //    logo.Alignment = Image.ALIGN_LEFT;
-                //    PdfPCell logoCell = new PdfPCell(logo);
-                //    logoCell.Border = Rectangle.NO_BORDER;
-                //    header.AddCell(logoCell);
-                //}
-                //else
-                //{
-                //    header.AddCell(new PdfPCell(new Phrase("Dream Rings Photography", bold14)) { Border = Rectangle.NO_BORDER });
-                //}
-                // ---------- LOGO ----------
-                if (companyInfo?.CompanyLogo != null && companyInfo.CompanyLogo.Length > 0)
+                PdfPTable left = new PdfPTable(1);
+                if (companyInfo?.CompanyLogo != null)
                 {
                     Image logo = Image.GetInstance(companyInfo.CompanyLogo);
-                    logo.ScaleAbsolute(200, 60);
-                    logo.Alignment = Image.ALIGN_LEFT;
-
-                    PdfPCell logoCell = new PdfPCell(logo);
-                    logoCell.Border = Rectangle.NO_BORDER;
-                    logoCell.PaddingBottom = 5;
-                    leftBlock.AddCell(logoCell);
-                }
-                else
-                {
-                    PdfPCell noLogo = new PdfPCell(new Phrase(companyInfo?.CompanyName ?? "Company Name", bold14));
-                    noLogo.Border = Rectangle.NO_BORDER;
-                    leftBlock.AddCell(noLogo);
+                    logo.ScaleToFit(180, 60);
+                    left.AddCell(NoBorderCell(logo));
                 }
 
-                // ---------- COMPANY INFO ----------
                 StringBuilder ci = new StringBuilder();
+                if (!string.IsNullOrEmpty(companyInfo?.Phone)) ci.AppendLine("☎ " + companyInfo.Phone);
+                if (!string.IsNullOrEmpty(companyInfo?.Address)) ci.AppendLine("📍 " + companyInfo.Address);
+                if (!string.IsNullOrEmpty(companyInfo?.Email)) ci.AppendLine("✉ " + companyInfo.Email);
 
-                string phoneCombined = null;
+                left.AddCell(NoBorderCell(new Phrase(ci.ToString(), normal)));
+                header.AddCell(NoBorderCell(left));
 
-                // Combine phone numbers
-                if (!string.IsNullOrEmpty(companyInfo?.Phone) &&
-                    !string.IsNullOrEmpty(companyInfo?.SecondaryPhone))
-                {
-                    phoneCombined = $"{companyInfo.Phone} / {companyInfo.SecondaryPhone}";
-                }
-                else if (!string.IsNullOrEmpty(companyInfo?.Phone))
-                {
-                    phoneCombined = companyInfo.Phone;
-                }
-                else if (!string.IsNullOrEmpty(companyInfo?.SecondaryPhone))
-                {
-                    phoneCombined = companyInfo.SecondaryPhone;
-                }
-
-                // Phone with icon 📞
-                if (!string.IsNullOrEmpty(phoneCombined))
-                    ci.AppendLine("\u260E  " + phoneCombined);
-
-                // Address with icon 📍
-                if (!string.IsNullOrEmpty(companyInfo?.Address))
-                    ci.AppendLine("\uD83D\uDCCC  " + companyInfo.Address);
-
-                // Email with icon ✉️
-                if (!string.IsNullOrEmpty(companyInfo?.Email))
-                    ci.AppendLine("\u2709  " + companyInfo.Email);
-
-                PdfPCell infoCell = new PdfPCell(new Phrase(ci.ToString(), normal11));
-                infoCell.Border = Rectangle.NO_BORDER;
-                infoCell.PaddingTop = 5;
-                leftBlock.AddCell(infoCell);
-
-                // Add left block to header table
-                PdfPCell finalLeft = new PdfPCell(leftBlock);
-                finalLeft.Border = Rectangle.NO_BORDER;
-                header.AddCell(finalLeft);
-
-                PdfPTable box = new PdfPTable(1);
-                box.AddCell(Cell("INVOICE", bold14, Element.ALIGN_CENTER, grey));
-                box.AddCell(Cell("Invoice #: " + b.BookingId, normal11));
-                box.AddCell(Cell("Date: " + DateTime.Now.ToString("yyyy-MM-dd"), normal11));
-                box.AddCell(Cell("Client: " + b.Customer.FirstName + " " + b.Customer.LastName, normal11));
-                box.AddCell(Cell("Phone: " + b.Customer.Phone, normal11));
-
-                PdfPCell boxCell = new PdfPCell(box);
-                boxCell.Border = Rectangle.NO_BORDER;
-                header.AddCell(boxCell);
+                PdfPTable right = new PdfPTable(1);
+                right.AddCell(Cell("INVOICE", title, Element.ALIGN_CENTER, grey));
+                right.AddCell(Cell("Invoice No : INV-" + b.BookingId.ToString("D6"), normal));
+                right.AddCell(Cell("Date : " + DateTime.Now.ToString("yyyy-MM-dd"), normal));
+                right.AddCell(Cell("Client : " + b.Customer.FirstName + " " + b.Customer.LastName, normal));
+                right.AddCell(Cell("Phone : " + b.Customer.Phone, normal));
+                header.AddCell(NoBorderCell(right));
 
                 doc.Add(header);
                 doc.Add(new Paragraph("\n"));
 
-                // ---------------- DETAILS ----------------
-                PdfPTable t1 = new PdfPTable(2);
-                t1.WidthPercentage = 100;
-
-                t1.AddCell(Cell("Event Type: " + b.EventType.Name, normal11));
-                t1.AddCell(Cell("Event Date: " + b.EventDate.ToString("yyyy-MM-dd"), normal11));
-                t1.AddCell(Cell("Venue: " + b.Location, normal11, colspan: 2));
-
-                doc.Add(t1);
+                // ---------------- EVENT DETAILS ----------------
+                PdfPTable details = new PdfPTable(2);
+                details.WidthPercentage = 100;
+                details.AddCell(Cell("Event Date : " + b.EventDate.ToString("yyyy-MM-dd"), normal));
+                details.AddCell(Cell("Venue : " + b.Location, normal));
+                doc.Add(details);
                 doc.Add(new Paragraph("\n"));
 
-                // ---------------- PACKAGE ITEMS TABLE ----------------
+                // ---------------- PACKAGE CONTENTS ----------------
                 PdfPTable pkg = new PdfPTable(4);
                 pkg.WidthPercentage = 100;
                 pkg.SetWidths(new float[] { 50, 15, 15, 20 });
 
-                // Header
-                pkg.AddCell(Cell("Package Items", bold12, bg: grey, colspan: 4));
-                pkg.AddCell(Cell("Description", bold12, bg: grey));
-                pkg.AddCell(Cell("Qty", bold12, Element.ALIGN_CENTER, grey));
-                pkg.AddCell(Cell("Price", bold12, Element.ALIGN_RIGHT, grey));
-                pkg.AddCell(Cell("Total", bold12, Element.ALIGN_RIGHT, grey));
+                string packageName = b.Package != null ? b.Package.Name : "Package";
 
-                // Loop – Package Items
-                decimal packageItemsTotal = 0m; // accumulate total
-                var package = b.Package;
+                pkg.AddCell(Cell($"Package Contents ({packageName})", bold, bg: grey, colspan: 4));
+                pkg.AddCell(Cell("Description", bold, bg: grey));
+                pkg.AddCell(Cell("Qty", bold, Element.ALIGN_CENTER, grey));
+                pkg.AddCell(Cell("Price", bold, Element.ALIGN_RIGHT, grey));
+                pkg.AddCell(Cell("Total", bold, Element.ALIGN_RIGHT, grey));
 
-                if (package?.PackageItemPackages != null && package.PackageItemPackages.Any())
+                decimal packageTotal = 0m;
+
+                // Package Items
+                foreach (var item in b.Package.PackageItemPackages)
                 {
-                    foreach (var item in package.PackageItemPackages)
-                    {
-                        var itemName = item.PackageItem?.Name ?? "";
-                        var qty = item.Qty;
-                        var unitPrice = item.UnitPrice;
-                        var total = item.CalculatedPrice;
+                    decimal total = item.CalculatedPrice;
+                    packageTotal += total;
 
-                        packageItemsTotal += total;
-                        grandTotal += total;
-
-                        pkg.AddCell(Cell(itemName, normal11));
-                        pkg.AddCell(Cell(qty.ToString(), normal11, Element.ALIGN_CENTER));
-                        pkg.AddCell(Cell(unitPrice.ToString("N2"), normal11, Element.ALIGN_RIGHT));
-                        pkg.AddCell(Cell(total.ToString("N2"), normal11, Element.ALIGN_RIGHT));
-                    }
-                }
-                else
-                {
-                    pkg.AddCell(Cell("No items found", normal11, colspan: 4));
+                    pkg.AddCell(Cell(item.PackageItem.Name, normal));
+                    pkg.AddCell(Cell(item.Qty.ToString(), normal, Element.ALIGN_CENTER));
+                    pkg.AddCell(Cell(Money(item.UnitPrice), normal, Element.ALIGN_RIGHT));
+                    pkg.AddCell(Cell(Money(total), normal, Element.ALIGN_RIGHT));
                 }
 
-                // Package Total
-                pkg.AddCell(Cell("Package Total", bold12, Element.ALIGN_RIGHT, colspan: 3));
-                pkg.AddCell(Cell(packageItemsTotal.ToString("N2"), bold12, Element.ALIGN_RIGHT));
+                // Package Event Types
+                foreach (var ev in b.Package.PackageEventTypes)
+                {
+                    decimal total = ev.UnitPrice;
+                    packageTotal += total;
 
+                    pkg.AddCell(Cell(ev.EventType.Name, normal));
+                    pkg.AddCell(Cell("1", normal, Element.ALIGN_CENTER));
+                    pkg.AddCell(Cell(Money(ev.UnitPrice), normal, Element.ALIGN_RIGHT));
+                    pkg.AddCell(Cell(Money(total), normal, Element.ALIGN_RIGHT));
+                }
+
+                pkg.AddCell(Cell("Package Total", bold, Element.ALIGN_RIGHT, colspan: 3));
+                pkg.AddCell(Cell(Money(packageTotal), bold, Element.ALIGN_RIGHT));
                 doc.Add(pkg);
+
                 doc.Add(new Paragraph("\n"));
 
 
-                // ---------------- EVENT TYPES TABLE ----------------
-                var eventTypes = b.Package?.PackageEventTypes;
+                // ---------------- BOOKING SUMMARY (EVENT TYPES + ADDONS) ----------------
+                PdfPTable addons = new PdfPTable(4);
+                addons.WidthPercentage = 100;
+                addons.SetWidths(new float[] { 50, 15, 15, 20 });
 
-                // 3 columns: Description, Price, Total
-                PdfPTable evt = new PdfPTable(3);
-                evt.WidthPercentage = 100;
-                evt.SetWidths(new float[] { 60, 20, 20 });
+                addons.AddCell(Cell("Booking Summary (Add-ons)", bold, bg: grey, colspan: 4));
+                addons.AddCell(Cell("Description", bold, bg: grey));
+                addons.AddCell(Cell("Qty", bold, Element.ALIGN_CENTER, grey));
+                addons.AddCell(Cell("Price", bold, Element.ALIGN_RIGHT, grey));
+                addons.AddCell(Cell("Total", bold, Element.ALIGN_RIGHT, grey));
 
-                evt.AddCell(Cell("Event Types", bold12, bg: grey, colspan: 3));
+                decimal addonsTotal = 0m;
 
-                // Header row
-                evt.AddCell(Cell("Description", bold12, bg: grey));
-                evt.AddCell(Cell("Price", bold12, Element.ALIGN_RIGHT, bg: grey));
-                evt.AddCell(Cell("Total", bold12, Element.ALIGN_RIGHT, bg: grey));
-
-                decimal eventTypesTotal = 0m;
-
-                if (eventTypes != null && eventTypes.Any())
+                //Selected Event Types (EXTRA / BOOKED)
+                if (b.BookingEventTypes != null)
                 {
-                    foreach (var ev in eventTypes)
+                    var groupedEvents = b.BookingEventTypes
+                        .GroupBy(x => x.EventType);
+
+                    foreach (var g in groupedEvents)
                     {
-                        var name = ev.EventType?.Name ?? "";
-                        var unit = ev.UnitPrice;
-                        decimal qty = 1; // Event type normally 1 per booking
-                        var total = qty * unit;
+                        int qty = g.Count();
+                        decimal price = g.Key.Price;
+                        decimal total = qty * price;
+                        addonsTotal += total;
 
-                        eventTypesTotal += total;
-                        grandTotal += total;
-
-                        evt.AddCell(Cell(name, normal11));
-                        evt.AddCell(Cell(unit.ToString("N2"), normal11, Element.ALIGN_RIGHT));
-                        evt.AddCell(Cell(total.ToString("N2"), normal11, Element.ALIGN_RIGHT));
+                        addons.AddCell(Cell(g.Key.Name, normal));
+                        addons.AddCell(Cell(qty.ToString(), normal, Element.ALIGN_CENTER));
+                        addons.AddCell(Cell(Money(price), normal, Element.ALIGN_RIGHT));
+                        addons.AddCell(Cell(Money(total), normal, Element.ALIGN_RIGHT));
                     }
                 }
-                else
+
+                // Add-ons
+                if (b.BookingAddons != null)
                 {
-                    evt.AddCell(Cell("No event types selected", normal11, colspan: 3));
+                    foreach (var a in b.BookingAddons.Where(x => x.Quantity > 0))
+                    {
+                        decimal total = a.Quantity * a.UnitPrice;
+                        addonsTotal += total;
+
+                        addons.AddCell(Cell(a.PackageItem.Name, normal));
+                        addons.AddCell(Cell(a.Quantity.ToString(), normal, Element.ALIGN_CENTER));
+                        addons.AddCell(Cell(Money(a.UnitPrice), normal, Element.ALIGN_RIGHT));
+                        addons.AddCell(Cell(Money(total), normal, Element.ALIGN_RIGHT));
+                    }
                 }
 
-                // Event Types Total row
-                evt.AddCell(Cell("Event Types Total", bold12, Element.ALIGN_RIGHT, colspan: 2));
-                evt.AddCell(Cell(eventTypesTotal.ToString("N2"), bold12, Element.ALIGN_RIGHT));
+                addons.AddCell(Cell("Add-ons Total", bold, Element.ALIGN_RIGHT, colspan: 3));
+                addons.AddCell(Cell(Money(addonsTotal), bold, Element.ALIGN_RIGHT));
+                doc.Add(addons);
 
-                doc.Add(evt);
                 doc.Add(new Paragraph("\n"));
 
-                // Add Full Amount section here
-                PdfPTable fullAmountTable = new PdfPTable(2);
-                fullAmountTable.WidthPercentage = 100;
-                fullAmountTable.SetWidths(new float[] { 80, 20 });
+                // ---------------- GRAND TOTAL ----------------
+                PdfPTable grand = new PdfPTable(2);
+                grand.WidthPercentage = 40;
+                grand.HorizontalAlignment = Element.ALIGN_RIGHT;
 
-                fullAmountTable.AddCell(Cell("Full Amount", bold12, Element.ALIGN_LEFT, grey));
-                fullAmountTable.AddCell(Cell((packageItemsTotal + eventTypesTotal).ToString("N2"), bold12, Element.ALIGN_RIGHT));
+                decimal grandTotal = packageTotal + addonsTotal;
 
-                doc.Add(fullAmountTable);
+                grand.AddCell(Cell("Grand Total", bold, bg: grey));
+                grand.AddCell(Cell(Money(grandTotal), bold, Element.ALIGN_RIGHT, grey));
+                doc.Add(grand);
                 doc.Add(new Paragraph("\n"));
 
-                // ---------------- PAYMENT SECTION ----------------
-                PdfPTable pay = new PdfPTable(2);
-                pay.WidthPercentage = 100;
-                pay.SetWidths(new float[] { 70, 30 });
-
-                pay.AddCell(Cell("Payment Details", bold12, bg: grey, colspan: 2));
-
-                foreach (var p in b.Payments.OrderBy(x => x.PaymentDate))
+                // ---------------- PAYMENT DETAILS ----------------
+                if (b.Payments != null && b.Payments.Any())
                 {
-                    pay.AddCell(Cell($"{p.PaymentType} ({p.PaymentDate:yyyy-MM-dd})", normal11));
-                    pay.AddCell(Cell(p.Amount.ToString("N2"), normal11, Element.ALIGN_RIGHT));
+                    PdfPTable pay = new PdfPTable(2);
+                    pay.WidthPercentage = 100;
+                    pay.SetWidths(new float[] { 70, 30 });
+
+                    pay.AddCell(Cell("Payment Details", bold, bg: grey, colspan: 2));
+
+                    decimal paidTotal = 0m;
+
+                    foreach (var p in b.Payments.OrderBy(x => x.PaymentDate))
+                    {
+                        paidTotal += p.Amount;
+
+                        string leftText =
+                            $"{p.PaymentType}" +
+                            (p.PaymentDate != DateTime.MinValue
+                                ? $" ({p.PaymentDate:yyyy-MM-dd})"
+                                : "");
+
+                        pay.AddCell(Cell(leftText, normal));
+                        pay.AddCell(Cell(Money(p.Amount), normal, Element.ALIGN_RIGHT));
+                    }
+
+                    decimal balance = grandTotal - paidTotal;
+
+                    PdfPTable balanceTbl = new PdfPTable(2);
+                    balanceTbl.WidthPercentage = 40;
+                    balanceTbl.HorizontalAlignment = Element.ALIGN_RIGHT;
+
+                    balanceTbl.AddCell(Cell("Balance Due", bold, bg: grey));
+                    balanceTbl.AddCell(Cell(Money(balance), bold, Element.ALIGN_RIGHT, grey));
+
+                    doc.Add(balanceTbl);
+
+                    // ---- TOTAL PAID ----
+                    pay.AddCell(Cell("Total Paid", bold, Element.ALIGN_RIGHT));
+                    pay.AddCell(Cell(Money(paidTotal), bold, Element.ALIGN_RIGHT));
+
+                    doc.Add(pay);
+                    doc.Add(new Paragraph("\n"));
                 }
 
-                decimal paid = b.Payments.Sum(x => x.Amount);
-                decimal balance = b.Package.BasePrice - paid;
 
-                pay.AddCell(Cell("Balance Due", bold12));
-                pay.AddCell(Cell(balance.ToString("N2"), bold12, Element.ALIGN_RIGHT));
+                // ---------------- SIGNATURE ----------------
+                PdfPTable sign = new PdfPTable(2);
+                sign.WidthPercentage = 100;
+                sign.SetWidths(new float[] { 60, 40 });
 
-                doc.Add(pay);
+                sign.AddCell(NoBorderCell("Customer Signature:\n\n______________________________"));
+                sign.AddCell(NoBorderCell(""));
+                doc.Add(sign);
+
+                doc.Add(new Paragraph("\n"));
+
+                // ---------------- FOOTER ----------------
+                Paragraph footer = new Paragraph(
+@"*** Terms and conditions ***
+----------------------------
+Albums & other prices may vary according to the Dollar rate.
+Full amount should be paid one week prior to your function.
+You have to reserve your date by paying an advance of Rs.10,000.00 (Non refundable)",
+                    normal);
+
+                doc.Add(footer);
+                doc.Add(new Paragraph("\n"));
+
+                Paragraph thanks = new Paragraph("Thank You Business with Dream Rings",
+                    footerBold);
+                thanks.Alignment = Element.ALIGN_CENTER;
+                doc.Add(thanks);
+
                 doc.Close();
-
                 return ms.ToArray();
             }
         }
 
-        private static PdfPCell Cell(string text, Font font, int align = Element.ALIGN_LEFT,
-                                     BaseColor bg = null, int colspan = 1)
+        private static string Money(decimal v)
+        {
+            return "Rs. " + v.ToString("N2");
+        }
+
+        private static PdfPCell Cell(string text, Font font,
+            int align = Element.ALIGN_LEFT, BaseColor bg = null, int colspan = 1)
         {
             PdfPCell c = new PdfPCell(new Phrase(text, font));
             c.HorizontalAlignment = align;
             c.Colspan = colspan;
-            c.Padding = 6;
+            c.Padding = 5;
             if (bg != null) c.BackgroundColor = bg;
             return c;
         }
+
+        private static PdfPCell NoBorderCell(IElement element)
+        {
+            PdfPCell c = new PdfPCell();
+            c.AddElement(element);
+            c.Border = Rectangle.NO_BORDER;
+            return c;
+        }
+
+        private static PdfPCell NoBorderCell(string text)
+        {
+            PdfPCell c = new PdfPCell(new Phrase(text));
+            c.Border = Rectangle.NO_BORDER;
+            return c;
+        }
     }
+
+    //private static PdfPCell Cell(string text, Font font, int align = Element.ALIGN_LEFT,
+    //                                 BaseColor bg = null, int colspan = 1)
+    //    {
+    //        PdfPCell c = new PdfPCell(new Phrase(text, font));
+    //        c.HorizontalAlignment = align;
+    //        c.Colspan = colspan;
+    //        c.Padding = 6;
+    //        if (bg != null) c.BackgroundColor = bg;
+    //        return c;
+    //    }
+    //}
 }

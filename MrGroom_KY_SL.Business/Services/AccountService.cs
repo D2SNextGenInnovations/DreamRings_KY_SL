@@ -26,7 +26,7 @@ namespace MrGroom_KY_SL.Business.Services
             }
             catch (ArgumentNullException ex)
             {
-                // Handle null arguments gracefully
+                // Handle null arguments
                 throw new Exception("Invalid input: Username or password cannot be null.", ex);
             }
             catch (InvalidOperationException ex)

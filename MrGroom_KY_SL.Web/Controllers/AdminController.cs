@@ -117,12 +117,12 @@ namespace MrGroom_KY_SL.Web.Controllers
                 var service = new BookingService();
                 var bookings = service.GetAll()
                     .Include(b => b.Customer)
-                    .Include(b => b.EventType)
+                    .Include(b => b.BookingEventTypes.Select(be => be.EventType)) // Include multiple EventTypes
                     .ToList()
                     .Select(b => new
                     {
                         id = b.BookingId,
-                        title = $"{(b.Customer?.FirstName ?? "Unknown")} - {(b.EventType?.Name ?? "Event")}",
+                        title = $"{(b.Customer?.FirstName ?? "Unknown")} - {string.Join(", ", b.BookingEventTypes.Select(be => be.EventType?.Name ?? "Event"))}",
                         start = b.EventDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                         end = b.EventDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                         location = b.Location ?? "N/A",
@@ -137,7 +137,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                 return Json(new { error = "Error loading bookings: " + ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
-
         public ActionResult Create()
         {
             try

@@ -196,7 +196,7 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                 if (model != null)
                 {
-                    return View(model); // Found a package-event link, show as usual
+                    return View(model); 
                 }
 
                 // If not found, fall back to EventType only
@@ -224,9 +224,7 @@ namespace MrGroom_KY_SL.Web.Controllers
             }
         }
 
-        // ---------------------------
         // Export to Excel
-        // ---------------------------
         public ActionResult ExportExcel()
         {
             try
@@ -296,10 +294,7 @@ namespace MrGroom_KY_SL.Web.Controllers
             }
         }
 
-
-        // ---------------------------
         // Export to PDF
-        // ---------------------------
         public ActionResult ExportPdf()
         {
             try

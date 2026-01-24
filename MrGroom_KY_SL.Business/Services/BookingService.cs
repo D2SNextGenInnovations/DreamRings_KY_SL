@@ -10,6 +10,7 @@ using System.Data.Entity.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Entity.Infrastructure;
 using MrGroom_KY_SL.Business.CustomExceptions;
+using MrGroom_KY_SL.Business.DTOs;
 
 namespace MrGroom_KY_SL.Business.Services
 {
@@ -23,106 +24,131 @@ namespace MrGroom_KY_SL.Business.Services
                 .GetAll()
                 .Include(b => b.Customer)
                 .Include(b => b.Package)
-                .Include(b => b.EventType)
+                .Include(b => b.BookingEventTypes.Select(be => be.EventType))
                 .Include(b => b.Payments)
                 .Include(b => b.StaffMembers);
         }
 
         public Booking GetById(int id)
         {
-               return _unitOfWork.BookingRepository.GetAll()
-                     .Include(b => b.Customer)
-                     .Include(b => b.Package)
-                     .Include(b => b.Package.PackageItemPackages.Select(pip => pip.PackageItem))
-                     .Include(b => b.Package.PackagePhotos)
-                     .Include(b => b.EventType)
-                     .Include(b => b.Package.PackageEventTypes.Select(pet => pet.EventType))
-                     .Include(b => b.StaffMembers)
-                     .Include(b => b.Payments)
-                     .FirstOrDefault(b => b.BookingId == id);
+            return _unitOfWork.BookingRepository.GetAll()
+                .Include(b => b.Customer)
+                .Include(b => b.Package)
+                .Include(b => b.Package.PackageItemPackages.Select(pip => pip.PackageItem))
+                .Include(b => b.Package.PackagePhotos)
+
+                .Include(b => b.BookingAddons.Select(a => a.PackageItem))
+
+                .Include(b => b.BookingEventTypes.Select(be => be.EventType))
+                .Include(b => b.Package.PackageEventTypes.Select(pet => pet.EventType))
+                .Include(b => b.StaffMembers)
+                .Include(b => b.Payments)
+                .FirstOrDefault(b => b.BookingId == id);
         }
 
-        public Booking Create(Booking booking, int[] staffIds)
+        public Booking Create(Booking booking, int[] staffIds, List<BookingAddonDTO> addons = null)
         {
             if (booking == null)
-                throw new ArgumentNullException(nameof(booking), "Booking object cannot be null.");
+                throw new ArgumentNullException(nameof(booking));
 
-            // -------------------------------------------------------
-            // 1. Check duplicate booking on the same date for customer
-            // -------------------------------------------------------
-            var existingBooking = _unitOfWork.BookingRepository
-                .GetAll()
-                .Include(b => b.Payments)
-                .Include(b => b.Package)
-                .FirstOrDefault(b =>
-                    b.CustomerId == booking.CustomerId &&
-                    b.PackageId == booking.PackageId &&
-                    DbFunctions.TruncateTime(b.EventDate) == DbFunctions.TruncateTime(booking.EventDate)
-                );
+            if (staffIds == null || staffIds.Length == 0)
+                throw new ArgumentException("At least one staff member must be assigned.", nameof(staffIds));
 
-            if (existingBooking != null)
-            {
-                decimal totalPaid = existingBooking.Payments.Sum(p => p.Amount);
-                decimal price = existingBooking.Package.BasePrice;
-
-                if (totalPaid < price)
-                {
-                    // Not fully paid → allow payment, block new booking
-                    throw new ExistingUnpaidBookingWarningException(
-                        "Customer already has a booking for this date. Please complete the pending payment.",
-                        existingBooking.BookingId
-                    );
-                }
-
-                // Fully paid duplicate → block creation
-                throw new Exception("This booking already exists and is fully paid. Cannot create another booking for the same customer & date.");
-            }
-
-            // -------------------------------------------------------
-            // 2. Prepare booking for insert
-            // -------------------------------------------------------
-            // Attach staff members
-            if (staffIds != null && staffIds.Length > 0)
-            {
-                var staff = _unitOfWork.StaffRepository
-                    .GetAll()
-                    .Where(s => staffIds.Contains(s.StaffId))
-                    .ToList();
-
-                booking.StaffMembers = staff;
-            }
-            else
-            {
-                booking.StaffMembers = new List<Staff>();
-            }
-
-            booking.BookingDate = DateTime.UtcNow;
-
-            // -------------------------------------------------------
-            // 3. Insert booking into DB
-            // -------------------------------------------------------
+            // Save booking
             _unitOfWork.BookingRepository.Insert(booking);
             _unitOfWork.Save();
 
-            //if (staffIds != null && staffIds.Length > 0)
-            //{
-            //    foreach (var staffId in staffIds)
-            //    {
-            //        _unitOfWork.BookingStaffRepository.Insert(new BookingStaff
-            //        {
-            //            BookingId = booking.BookingId,
-            //            StaffId = staffId
-            //        });
-            //    }
+            // Assign staff
+            var staffToAssign = _unitOfWork.StaffRepository
+                .GetAll()
+                .Where(s => staffIds.Contains(s.StaffId))
+                .ToList();
 
-            //    _unitOfWork.Save();
-            //}
-            // After Save() → booking.BookingId is now populated by EF
+            foreach (var staff in staffToAssign)
+                booking.StaffMembers.Add(staff);
 
-            return booking;  // IMPORTANT — return saved booking with real ID
+            _unitOfWork.Save();
+
+            // Load package data safely
+            var packageEventTypeIds = new HashSet<int>();
+            var packageItemIds = new HashSet<int>();
+
+            Package package = null;
+
+            if (booking.PackageId > 0)
+            {
+                package = _unitOfWork.PackageRepository
+                    .GetAll()
+                    .Include(p => p.PackageEventTypes)
+                    .Include(p => p.PackageItemPackages.Select(pp => pp.PackageItem))
+                    .FirstOrDefault(p => p.PackageId == booking.PackageId);
+
+                if (package != null)
+                {
+                    packageEventTypeIds = package.PackageEventTypes
+                        .Select(pe => pe.EventTypeId)
+                        .ToHashSet();
+
+                    packageItemIds = package.PackageItemPackages
+                        .Where(pp => pp.PackageItem != null)
+                        .Select(pp => pp.PackageItem.PackageItemId)
+                        .ToHashSet();
+                }
+            }
+
+            // Insert ALL selected EventTypes
+            // merge EventTypes (KEEP existing, INSERT new only)
+            if (booking.SelectedEventTypeIds != null && booking.SelectedEventTypeIds.Any())
+            {
+                // Existing event types for this booking
+                var existingEventTypeIds = _unitOfWork.BookingEventTypeRepository
+                    .GetAll()
+                    .Where(x => x.BookingId == booking.BookingId)
+                    .Select(x => x.EventTypeId)
+                    .ToHashSet();
+
+                // Insert ONLY new ones
+                foreach (var eventTypeId in booking.SelectedEventTypeIds.Distinct())
+                {
+                    if (existingEventTypeIds.Contains(eventTypeId))
+                        continue; //already exists, keep it
+
+                    _unitOfWork.BookingEventTypeRepository.Insert(new BookingEventType
+                    {
+                        BookingId = booking.BookingId,
+                        EventTypeId = eventTypeId
+                    });
+                }
+
+                _unitOfWork.Save();
+            }
+
+            if (addons != null && addons.Any())
+            {
+                foreach (var addon in addons.Where(a => a.Quantity > 0))
+                {
+                    var item = _unitOfWork.PackageItemRepository
+                        .GetById(addon.PackageItemId);
+
+                    if (item == null) continue;
+
+                    _unitOfWork.BookingAddonRepository.Insert(new BookingAddon
+                    {
+                        BookingId = booking.BookingId,
+                        PackageItemId = item.PackageItemId,
+                        Quantity = addon.Quantity,
+                        UnitPrice = addon.UnitPrice > 0
+                            ? addon.UnitPrice
+                            : item.Price
+                    });
+                }
+
+                _unitOfWork.Save();
+            }
+            return booking;
         }
 
-        public void Update(Booking booking, int[] staffIds)
+        public void Update(Booking booking, int[] staffIds, List<BookingAddonDTO> addons = null)
         {
             if (booking == null)
                 throw new ArgumentNullException(nameof(booking), "Booking object cannot be null.");
@@ -130,33 +156,27 @@ namespace MrGroom_KY_SL.Business.Services
             if (staffIds == null || staffIds.Length == 0)
                 throw new ArgumentException("You must assign at least one staff member.", nameof(staffIds));
 
-            // Load booking with staff
+            // Load booking with relations
             var existing = _unitOfWork.BookingRepository
                 .GetAll()
                 .Include(b => b.StaffMembers)
+                .Include(b => b.BookingEventTypes)
                 .FirstOrDefault(b => b.BookingId == booking.BookingId);
 
             if (existing == null)
                 throw new KeyNotFoundException($"Booking with ID {booking.BookingId} was not found.");
 
-            // -----------------------------
             // Update booking basic fields
-            // -----------------------------
             existing.CustomerId = booking.CustomerId;
             existing.PackageId = booking.PackageId;
-            existing.EventTypeId = booking.EventTypeId;
             existing.EventDate = booking.EventDate;
-            existing.BookingDate = booking.BookingDate != DateTime.MinValue
-                ? booking.BookingDate
-                : existing.BookingDate;
+            existing.Location = booking.Location;
             existing.Notes = booking.Notes;
-            existing.Status = string.IsNullOrWhiteSpace(booking.Status)
-                ? existing.Status
-                : booking.Status;
 
-            // -----------------------------
-            // Update Staff (EF handles join table)
-            // -----------------------------
+            if (!string.IsNullOrWhiteSpace(booking.Status))
+                existing.Status = booking.Status;
+
+            // Update Staff (Many-to-Many)
             var staffToAssign = _unitOfWork.StaffRepository
                 .GetAll()
                 .Where(s => staffIds.Contains(s.StaffId))
@@ -165,118 +185,97 @@ namespace MrGroom_KY_SL.Business.Services
             if (!staffToAssign.Any())
                 throw new InvalidOperationException("No matching staff members found.");
 
-            // Clear old staff
             existing.StaffMembers.Clear();
-
-            // Assign new staff
             foreach (var staff in staffToAssign)
-            {
                 existing.StaffMembers.Add(staff);
+
+            // Update Event Types (Many-to-Many)
+            var selectedEventTypeIds = booking.SelectedEventTypeIds ?? Array.Empty<int>();
+
+            // Get existing EventTypeIds for this booking
+            var existingEventTypeIds = existing.BookingEventTypes
+                .Select(be => be.EventTypeId)
+                .ToHashSet();
+
+            // Insert ONLY new event types
+            foreach (var eventTypeId in selectedEventTypeIds)
+            {
+                if (existingEventTypeIds.Contains(eventTypeId))
+                    continue;
+
+                _unitOfWork.BookingEventTypeRepository.Insert(new BookingEventType
+                {
+                    BookingId = existing.BookingId,
+                    EventTypeId = eventTypeId
+                });
             }
 
-            // Save changes
+            // Update Addons (EXTRA ONLY)
+            var existingAddons = _unitOfWork.BookingAddonRepository
+                .GetAll()
+                .Where(a => a.BookingId == existing.BookingId)
+                .ToList();
+
+            // Load package item IDs
+            var packageItemIds = new HashSet<int>();
+            if (existing.PackageId > 0)
+            {
+                var package = _unitOfWork.PackageRepository
+                    .GetAll()
+                    .Include(p => p.PackageItemPackages)
+                    .FirstOrDefault(p => p.PackageId == existing.PackageId);
+
+                if (package != null)
+                {
+                    packageItemIds = package.PackageItemPackages
+                        .Select(p => p.PackageItemId)
+                        .ToHashSet();
+                }
+            }
+
+            // Remove deleted addons
+            foreach (var ex in existingAddons)
+            {
+                if (packageItemIds.Contains(ex.PackageItemId))
+                    continue;
+
+                if (addons == null || !addons.Any(a => a.PackageItemId == ex.PackageItemId))
+                    _unitOfWork.BookingAddonRepository.Delete(ex);
+            }
+
+            // Add / Update addons
+            if (addons != null)
+            {
+                foreach (var addon in addons.Where(a => a.Quantity > 0))
+                {
+                    if (packageItemIds.Contains(addon.PackageItemId))
+                        continue;
+
+                    var existingAddon = existingAddons
+                        .FirstOrDefault(a => a.PackageItemId == addon.PackageItemId);
+
+                    if (existingAddon != null)
+                    {
+                        existingAddon.Quantity = addon.Quantity;
+                    }
+                    else
+                    {
+                        var item = _unitOfWork.PackageItemRepository.GetById(addon.PackageItemId);
+                        if (item == null) continue;
+
+                        _unitOfWork.BookingAddonRepository.Insert(new BookingAddon
+                        {
+                            BookingId = existing.BookingId,
+                            PackageItemId = item.PackageItemId,
+                            Quantity = addon.Quantity,
+                            UnitPrice = item.Price
+                        });
+                    }
+                }
+            }
+            // Save all changes
             _unitOfWork.Save();
         }
-
-        //public void Update(Booking booking, int[] staffIds)
-        //{
-        //    try
-        //    {
-        //        if (booking == null)
-        //            throw new ArgumentNullException(nameof(booking), "Booking object cannot be null.");
-
-        //        if (staffIds == null || staffIds.Length == 0)
-        //            throw new ArgumentException("You must assign at least one staff member.", nameof(staffIds));
-
-        //        var existing = _unitOfWork.BookingRepository.GetAll()
-        //            .Include(b => b.StaffMembers)
-        //            .FirstOrDefault(b => b.BookingId == booking.BookingId);
-
-        //        if (existing == null)
-        //            throw new KeyNotFoundException($"Booking with ID {booking.BookingId} was not found.");
-
-        //        // Update base info
-        //        existing.CustomerId = booking.CustomerId;
-        //        existing.PackageId = booking.PackageId;
-        //        existing.EventTypeId = booking.EventTypeId;
-        //        existing.EventDate = booking.EventDate;
-        //        existing.BookingDate = booking.BookingDate != DateTime.MinValue
-        //            ? booking.BookingDate
-        //            : DateTime.UtcNow;
-        //        existing.Notes = booking.Notes;
-        //        existing.Status = string.IsNullOrWhiteSpace(booking.Status) ? "Pending" : booking.Status;
-
-        //        // Update staff members
-        //        var staffToAssign = _unitOfWork.StaffRepository
-        //            .GetAll()
-        //            .Where(s => staffIds.Contains(s.StaffId))
-        //            .ToList();
-
-        //        if (staffToAssign == null || staffToAssign.Count == 0)
-        //            throw new InvalidOperationException("No matching staff members found for the given IDs.");
-
-        //        //existing.StaffMembers = staffToAssign;
-        //        // Remove old relations
-        //        var oldRelations = _unitOfWork.BookingStaffRepository
-        //                          .GetAll()
-        //                          .Where(bs => bs.BookingId == existing.BookingId)
-        //                          .ToList();
-
-        //        foreach (var rel in oldRelations)
-        //            _unitOfWork.BookingStaffRepository.Delete(rel);
-
-        //        // Add new relations
-        //        foreach (var staffId in staffIds)
-        //        {
-        //            _unitOfWork.BookingStaffRepository.Insert(new BookingStaff
-        //            {
-        //                BookingId = existing.BookingId,
-        //                StaffId = staffId
-        //            });
-        //        }
-
-        //        _unitOfWork.Save();
-        //    }
-        //    catch (ArgumentNullException)
-        //    {
-        //        // Let the caller handle argument exceptions
-        //        throw;
-        //    }
-        //    catch (ArgumentException)
-        //    {
-        //        // Let the caller handle invalid argument exceptions
-        //        throw;
-        //    }
-        //    catch (KeyNotFoundException)
-        //    {
-        //        // Let the caller handle not-found exceptions
-        //        throw;
-        //    }
-        //    catch (DbEntityValidationException ex)
-        //    {
-        //        // Handles EF validation errors (if using EF6)
-        //        var errors = ex.EntityValidationErrors
-        //            .SelectMany(e => e.ValidationErrors)
-        //            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}");
-        //        var errorMessage = "Entity validation failed - " + string.Join("; ", errors);
-        //        throw new Exception(errorMessage, ex);
-        //    }
-        //    catch (DbUpdateException ex)
-        //    {
-        //        // Handles EF update/database constraint errors
-        //        throw new Exception("Database update failed while saving booking. Check relational constraints or data validity.", ex);
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        // Handles invalid state in LINQ/EF operations
-        //        throw new Exception("Invalid operation detected during booking update: " + ex.Message, ex);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Fallback for any unexpected errors
-        //        throw new Exception("An unexpected error occurred while updating the booking: " + ex.Message, ex);
-        //    }
-        //}
 
         public void Delete(int id)
         {
@@ -289,13 +288,13 @@ namespace MrGroom_KY_SL.Business.Services
         }
 
         public void UpdateStatus(int bookingId, string status)
-{
-    var booking = _unitOfWork.BookingRepository.GetById(bookingId);
-    if (booking == null)
-        throw new Exception("Booking not found");
+        {
+            var booking = _unitOfWork.BookingRepository.GetById(bookingId);
+            if (booking == null)
+                throw new Exception("Booking not found");
 
-    booking.Status = status;
-    _unitOfWork.Save();
-}
+            booking.Status = status;
+            _unitOfWork.Save();
+        }
     }
 }

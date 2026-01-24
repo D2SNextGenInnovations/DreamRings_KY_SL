@@ -203,6 +203,8 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AdminDashboardViewModel.cs" />
+    <Compile Include="Models\BookingAddonViewModel.cs" />
+    <Compile Include="Models\BookingCreateViewModel.cs" />
     <Compile Include="Models\CustomerViewModel.cs" />
     <Compile Include="Models\EmailSenderViewModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />

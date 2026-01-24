@@ -1,9 +1,11 @@
-﻿@model MrGroom_KY_SL.Models.Booking
+﻿@*@model MrGroom_KY_SL.Models.Booking*@
+@model MrGroom_KY_SL.Web.Models.BookingCreateViewModel
+@using MrGroom_KY_SL.Web.Models
 
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.Title = "Edit Booking";
-    bool isCanceled = Model.Status == "Canceled";
+    bool isCanceled = Model.Status == "Cancelled";
 }
 
 <div class="booking-edit-wrapper py-5">
@@ -20,7 +22,7 @@
             @Html.AntiForgeryToken()
             @Html.HiddenFor(m => m.BookingId)
 
-            <!-- Customer -->
+        <!-- Customer -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Customer</label>
                 <div class="input-group">
@@ -31,7 +33,7 @@
                 @Html.ValidationMessageFor(m => m.CustomerId, "", new { @class = "text-danger small" })
             </div>
 
-            <!-- Package -->
+        <!-- Package -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Package</label>
                 <div class="input-group">
@@ -42,28 +44,32 @@
                 @Html.ValidationMessageFor(m => m.PackageId, "", new { @class = "text-danger small" })
             </div>
 
-            <!-- Event Type -->
-            <div class="form-group mb-4">
-                <label class="form-label fw-semibold">Event Type</label>
-                <div class="input-group">
-                    <span class="input-group-text icon-gradient"><i class="bi bi-calendar-event"></i></span>
-                    @*@Html.DropDownListFor(m => m.EventTypeId, (SelectList)ViewBag.EventTypes, "- Select Event Type -", new { @class = "form-control" })*@
-                    @Html.DropDownListFor(m => m.EventTypeId, (SelectList)ViewBag.EventTypes, "- Select Event Type -", new { @class = "form-control" })
+
+        <!-- Package Includes -->
+            <div id="packageIncludes"
+                 class="border rounded-3 p-3 mt-2 mb-4 bg-light d-none">
+
+
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi bi-check2-circle text-success me-2"></i>
+                    <small class="fw-semibold text-muted">Package Includes</small>
                 </div>
-                @Html.ValidationMessageFor(m => m.EventTypeId, "", new { @class = "text-danger small" })
+
+                <div id="packageIncludesList"></div>
             </div>
 
-            <!-- Event Date -->
+        <!-- Event Date -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Event Date</label>
                 <div class="input-group">
                     <span class="input-group-text icon-gradient"><i class="bi bi-calendar3"></i></span>
-                    @Html.TextBoxFor(m => m.EventDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", Value = ViewBag.EventDateFormatted })
+                    @*@Html.TextBoxFor(m => m.EventDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", Value = ViewBag.EventDateFormatted })*@
+                    @Html.TextBoxFor(m => m.EventDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
                 </div>
                 @Html.ValidationMessageFor(m => m.EventDate, "", new { @class = "text-danger small" })
             </div>
 
-                       <!-- Event Location -->
+        <!-- Event Location -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Location</label>
                 <div class="input-group">
@@ -75,7 +81,7 @@
                 @Html.ValidationMessageFor(m => m.Location, "", new { @class = "text-danger small" })
             </div>
 
-            <!-- Assign Staff -->
+        <!-- Assign Staff -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Assign Staff (required)</label>
                 @*@Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })*@
@@ -83,146 +89,347 @@
                 @Html.ValidationMessageFor(m => m.SelectedStaffIds, "", new { @class = "text-danger small" })
             </div>
 
-            <!-- Cancel Booking Switch -->
-            <div class="form-group mb-4 d-flex align-items-center justify-content-between">
-                <label class="fw-semibold mb-0 text-danger">
-                    Cancel Booking
-                </label>
+            <div class="mb-4 text-center">
+                <button type="button"
+                        id="btnToggleAddons"
+                        class="btn btn-glow px-4 py-2">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add Extras (Event Types & Items)
+                </button>
+            </div>
 
-                <div class="form-check form-switch">
-                    <input type="checkbox"
-                           class="form-check-input"
-                           id="IsCanceled"
-                           name="IsCanceled"
-                           value="true"
-                           @(isCanceled ? "checked" : "") />
+             <!-- Addons section-->
+            <div id="addonsSection" style="display:none;">
 
-                    <label class="form-check-label" for="IsCanceled">
-                        @(isCanceled ? "Canceled" : "Active")
-                    </label>
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-body">
+
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-stars text-primary me-2"></i>
+                            Addons
+                        </h5>
+                        <p class="text-muted small mb-4">
+                            Select event types (one-time) and optional add-on items (per unit) to enhance the booking.
+                        </p>
+
+                        @{
+                            var index = 0;
+                        }
+
+                        <div class="list-group list-group-flush">
+
+                            <!-- Event Types-->
+                            @if (ViewBag.EventTypes != null && ((IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes).Any())
+                            {
+                                <div class="list-group-item bg-primary text-white fw-bold">
+                                    Event Types
+                                </div>
+
+                                foreach (var et in (IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes)
+                                {
+                                    <label class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">@et.Name</div>
+                                            <small class="text-muted">One-time charge</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold">Rs @et.Price</div>
+
+                                            <input type="checkbox"
+                                                   class="form-check-input mt-1 event-type-checkbox"
+                                                   name="SelectedEventTypeIds"
+                                                   value="@et.EventTypeId"
+                                                   data-eventtype-id="@et.EventTypeId" />
+                                        </div>
+                                    </label>
+                                }
+                            }
+
+                            <!-- Addons-->
+                            @if (ViewBag.PackageItems != null && ((IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems).Any())
+                            {
+                                <div class="list-group-item bg-success text-white fw-bold mt-3">
+                                    Package Items
+                                </div>
+
+                                foreach (var item in (IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">@item.Name</div>
+                                            <small class="text-muted">Per unit</small>
+                                        </div>
+                                        <div class="text-end d-flex align-items-center gap-2">
+                                            <div class="fw-bold">Rs @item.Price</div>
+                                            <input type="number"
+                                                   class="form-control form-control-sm text-center addon-qty"
+                                                   data-packageitem-id="@item.PackageItemId"
+                                                   name="SelectedAddons[@index].Quantity"
+                                                   value="0"
+                                                   min="0"
+                                                   style="width:70px" />
+
+                                            <input type="hidden"
+                                                   name="SelectedAddons[@index].PackageItemId"
+                                                   value="@item.PackageItemId" />
+                                        </div>
+                                    </div>
+                                    index++;
+                                }
+                            }
+
+                        </div>
+
+                        @Html.ValidationMessageFor(m => m.SelectedEventTypeIds, "", new { @class = "text-danger small mt-3 d-block" })
+
+                    </div>
                 </div>
             </div>
 
+        <!-- Cancel Booking Switch -->
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body d-flex justify-content-between align-items-center">
 
-            <!-- Buttons -->
-            <div class="text-end mt-5 d-flex justify-content-end gap-3">
-                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
-                <button type="submit" class="btn btn-glow px-4">
-                    <i class="bi bi-save"></i> Save Changes
-                </button>
-            </div>
-        }
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="icon-circle bg-danger-subtle text-danger">
+                                            <i class="bi bi-x-circle"></i>
+                                        </div>
+
+                                        <div>
+                                            <div class="fw-semibold text-danger">
+                                                Cancel Booking
+                                            </div>
+                                            <small class="text-muted">
+                                                Marking this booking as canceled will disable payments and updates
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-check form-switch text-end">
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               id="IsCanceled"
+                                               name="IsCanceled"
+                                               value="true"
+                                               @(isCanceled ? "checked" : "") />
+
+                                        <label class="form-check-label fw-semibold ms-2" for="IsCanceled">
+                                            @(isCanceled ? "Cancelled" : "Active")
+                                        </label>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+
+        <!-- Buttons -->
+                            <div class="text-end mt-5 d-flex justify-content-end gap-3">
+                                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
+                                <button type="submit" id="btnCreateBooking" class="btn btn-glow px-4">
+                                    <i class="bi bi-save"></i> Save Changes
+                                </button>
+
+                            </div>
+                            }
     </div>
 </div>
 
-<!--Payment Modal -->
+<!-- Payment Modal -->
 <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content p-3">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="paymentModalLabel">Complete Payment</h5>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold" id="paymentModalLabel">
+                    <i class="bi bi-credit-card-2-front me-2 text-primary"></i>
+                    Complete Payment
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
 
-                <!-- Booking Summary -->
-                <div class="mb-3 p-2 bg-light rounded">
-                    <p><strong>Customer:</strong> <span id="paymentCustomer"></span></p>
-                    <p><strong>Full Amount:</strong> $<span id="paymentFullAmount">0.00</span></p>
-                    <p><strong>Previously Paid:</strong> $<span id="paymentPrevPaid">0.00</span></p>
-                    <p><strong>Balance:</strong> $<span id="paymentBalance">0.00</span></p>
+            <div class="modal-body p-4">
+
+                <!-- Customer Name -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body d-flex align-items-center">
+                        <i class="bi bi-person-circle fs-3 text-primary me-3"></i>
+                        <div>
+                            <div class="text-muted small">Customer</div>
+                            <div class="fw-bold fs-5" id="paymentCustomer">—</div>
+                        </div>
+                    </div>
                 </div>
 
-                <form id="paymentForm">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="BookingId" id="paymentBookingId" />
+                <!-- Booking Summary -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body py-3 px-3">
 
-                    <div class="mb-3">
-                        <label class="form-label">Payment Amount</label>
-                        <input type="number" name="Amount" id="paymentAmount" class="form-control" step="0.01" required />
-                    </div>
+                        <h6 class="fw-semibold text-muted mb-2" style="font-size:0.85rem;">
+                            <i class="bi bi-receipt me-1 text-info"></i>
+                            Booking Summary
+                        </h6>
 
-                    <div class="mb-3">
-                        <label class="form-label">Payment Method</label>
-                        <input type="text" name="PaymentMethod" class="form-control" placeholder="e.g., Cash, Card" required />
-                    </div>
+                        <!-- Event Types -->
+                        <div id="paymentEventTypesSection" class="mb-2">
+                            <div class="fw-semibold text-secondary mb-1" style="font-size:0.8rem;">
+                                Event Types
+                            </div>
+                            <ul class="list-group list-group-flush small" id="paymentEventTypesList"></ul>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Payment Type</label>
-                        <select name="PaymentType" class="form-select" required>
-                            <option value="">- Select Type -</option>
-                            <option>Advance</option>
-                            <option>Half</option>
-                            <option>Full</option>
-                        </select>
-                    </div>
+                        <!-- Add-ons -->
+                        <div id="paymentAddonsSection">
+                            <div class="fw-semibold text-secondary mb-1" style="font-size:0.8rem;">
+                                Add-ons
+                            </div>
+                            <ul class="list-group list-group-flush small" id="paymentAddonsList"></ul>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Remarks</label>
-                        <textarea name="Remarks" class="form-control" rows="2"></textarea>
                     </div>
-                </form>
+                </div>
+
+
+                <!-- Package & Add-ons Amount Info -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+
+                        <h6 class="fw-bold text-uppercase text-muted mb-3">
+                            <i class="bi bi-cash-stack me-2 text-success"></i>
+                            Amount Summary
+                        </h6>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Package Amount</span>
+                            <span class="fw-semibold">
+                                Rs <span id="packageAmount">0.00</span>
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Add-ons Amount</span>
+                            <span class="fw-semibold">
+                                Rs <span id="paymentTotAddonsAmount">0.00</span>
+                            </span>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-semibold">Total Amount</span>
+                            <span class="fw-bold fs-6">
+                                Rs <span id="paymentFullAmount">0.00</span>
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span>Previously Paid</span>
+                            <span class="fw-semibold">
+                                Rs <span id="paymentPrevPaid">0.00</span>
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light">
+                            <span class="fw-bold text-danger">Balance</span>
+                            <span class="fw-bold fs-5 text-danger">
+                                Rs <span id="paymentBalance">0.00</span>
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Payment Details -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+
+                        <h6 class="fw-bold text-uppercase text-muted mb-3">
+                            <i class="bi bi-wallet2 me-2 text-primary"></i>
+                            Payment Details
+                        </h6>
+
+                        <form id="paymentForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="BookingId" id="paymentBookingId" />
+
+                            <div class="mb-3">
+                                <label class="form-label">Payment Amount</label>
+                                <input type="number"
+                                       name="Amount"
+                                       id="paymentAmount"
+                                       class="form-control"
+                                       step="0.01"
+                                       required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Payment Method</label>
+                                <input type="text"
+                                       name="PaymentMethod"
+                                       class="form-control"
+                                       placeholder="Cash, Card, Bank Transfer"
+                                       required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Payment Type</label>
+                                <select name="PaymentType" class="form-select" required>
+                                    <option value="">- Select Type -</option>
+                                    <option>Advance</option>
+                                    <option>Half</option>
+                                    <option>Full</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Remarks</label>
+                                <textarea name="Remarks" class="form-control" rows="2"></textarea>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
             </div>
 
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" id="btnSavePayment">Save Payment</button>
+            <div class="modal-footer bg-light">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary px-4" id="btnSavePayment">
+                    <i class="bi bi-save me-1"></i> Save Payment
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 
-<!--Payment Modal -->
-<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+<!-- Fully Paid Success Modal -->
+<div class="modal fade" id="fullyPaidModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content p-3">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="paymentModalLabel">Complete Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3 p-2 bg-light rounded">
-                    <p><strong>Customer:</strong> <span id="paymentCustomer"></span></p>
-                    <p><strong>Full Amount:</strong> $<span id="paymentFullAmount">0.00</span></p>
-                    <p><strong>Previously Paid:</strong> $<span id="paymentPrevPaid">0.00</span></p>
-                    <p><strong>Balance:</strong> $<span id="paymentBalance">0.00</span></p>
-                </div>
-
-                <form id="paymentForm">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="BookingId" id="paymentBookingId" />
-
-                    <div class="mb-3">
-                        <label class="form-label">Payment Amount</label>
-                        <input type="number" name="Amount" id="paymentAmount" class="form-control" step="0.01" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Payment Method</label>
-                        <input type="text" name="PaymentMethod" class="form-control" placeholder="e.g., Cash, Card" required />
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Payment Type</label>
-                        <select name="PaymentType" class="form-select" required>
-                            <option value="">- Select Type -</option>
-                            <option>Advance</option>
-                            <option>Half</option>
-                            <option>Full</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Remarks</label>
-                        <textarea name="Remarks" class="form-control" rows="2"></textarea>
-                    </div>
-                </form>
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Booking Completed
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" id="btnSavePayment">Save Payment</button>
+            <div class="modal-body text-center py-4">
+                <p class="fs-6 mb-2">
+                    🎉 <strong>Your booking has been saved successfully.</strong>
+                </p>
+                <p class="text-muted mb-0">
+                    The payment for this booking is already <strong>fully completed</strong>.
+                    No further action is required.
+                </p>
+            </div>
+
+            <div class="modal-footer justify-content-center">
+                <button type="button"
+                        class="btn btn-success px-4"
+                        id="btnFullyPaidOk">
+                    Go to Bookings
+                </button>
             </div>
         </div>
     </div>
@@ -231,125 +438,343 @@
 
 
 @section Scripts {
-<script>
-    var bookingStatus = '@Model.Status';
-</script>
+    <script>
+        var bookingStatus = '@Model.Status';
+    </script>
     <script>
 
+        $(function () {
 
+            $('#btnToggleAddons').on('click', function () {
+                const section = $('#addonsSection');
+                section.slideToggle(200);
 
-$(function () {
-
-    if (bookingStatus === 'Canceled') {
-        $('#btnSavePayment').prop('disabled', true)
-            .addClass('disabled');
-
-        toastr.warning('This booking is canceled. Payments are disabled.');
-
-        $('#paymentModal').on('show.bs.modal', function (e) {
-            e.preventDefault();
-        });
-    }
-
-    // Populate Payment Modal
-    function populatePaymentModal(res) {
-        $('#paymentCustomer').text(res.customerName);
-        $('#paymentFullAmount').text(res.fullAmount.toFixed(2));
-        $('#paymentPrevPaid').text(res.prevPaid.toFixed(2));
-
-        const balance = res.fullAmount - res.prevPaid;
-        $('#paymentBalance').text(balance.toFixed(2));
-
-        $('#paymentAmount').val(balance.toFixed(2));
-        $('#paymentForm').find('input[name="PaymentMethod"]').val(res.paymentMethod || '');
-        $('#paymentForm').find('select[name="PaymentType"]').val(res.paymentType || '');
-        $('#paymentForm').find('textarea[name="Remarks"]').val(res.remarks || '');
-    }
-
-    // Handle Booking Form Submit via AJAX
-    $('#bookingForm').on('submit', function (e) {
-        e.preventDefault();
-        const form = $(this);
-
-        $.ajax({
-            url: form.attr('action'),
-            type: 'POST',
-            data: form.serialize(),
-            success: function (res) {
-                if (res && res.unpaid) {
-                    toastr.warning(res.message);
-                    $('#paymentBookingId').val(res.bookingId);
-                    populatePaymentModal(res);
-                    $('#paymentModal').modal('show');
-                    return;
-                }
-
-                if (res && res.success) {
-                    toastr.success(res.message || "Booking updated successfully!");
-
-                    if (res.bookingId) {
-                        $('#paymentBookingId').val(res.bookingId);
-                        populatePaymentModal(res);
-                        $('#paymentModal').modal('show');
-                        return;
-                    }
-
-                    setTimeout(function () {
-                        window.location.href = '@Url.Action("Index", "AdminBookings")';
-                    }, 900);
+                // Toggle button text
+                if (section.is(':visible')) {
+                    $(this).html('<i class="bi bi-dash-circle"></i> Hide Items / Event Types');
                 } else {
-                    toastr.warning(res.message || 'Please correct the errors and try again.');
+                    $(this).html('<i class="bi bi-plus-circle"></i> Add Items / Event Types');
                 }
-            },
-            error: function (xhr, status, err) {
-                console.error(err);
-                toastr.error('Something went wrong while updating booking.');
-            }
+            });
+
         });
-    });
 
-    // Save Payment via AJAX
-    $('#btnSavePayment').on('click', function () {
-        const paymentData = $('#paymentForm').serialize();
 
-        $.ajax({
-            url: '@Url.Action("SavePayment", "AdminBookings")',
-            type: 'POST',
-            data: paymentData,
-            success: function (res) {
-                if (res.success) {
-                    toastr.success(res.message || "Payment saved!");
-                    $('#paymentModal').modal('hide');
+        //button animation
+        function setButtonLoading(btn, loadingText) {
+            btn.data('original-text', btn.html());
+            btn.prop('disabled', true);
+            btn.html(`
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        ${loadingText}
+    `);
+        }
 
-                    if (res.invoiceUrl) {
-                        window.open(res.invoiceUrl, "_blank");
+        function resetButton(btn) {
+            btn.prop('disabled', false);
+            btn.html(btn.data('original-text'));
+        }
+        //
+
+        $('#PackageId').on('change', function () {
+
+            const packageId = $(this).val();
+
+            // If "- Select Package -"
+            if (!packageId) {
+                $('#packageIncludesList').empty();
+                $('#packageIncludes').addClass('d-none');
+                return;
+            }
+
+            // Load includes only when a valid package is selected
+            loadPackageIncludes(packageId);
+        });
+
+        function loadPackageIncludes(packageId) {
+
+            if (!packageId) {
+                $('#packageIncludesList').empty();
+                $('#packageIncludes').addClass('d-none');
+                return;
+            }
+
+
+            $.get('/AdminBookings/GetPackageAddons', { packageId }, function (res) {
+
+                if (!res.success) return;
+
+                let html = '';
+
+                // Event Types
+                if (res.eventTypes && res.eventTypes.length) {
+
+                    html += `
+                <div class="package-section">
+                    <div class="package-section-title">Event Types</div>
+                    <div class="package-chips">
+            `;
+
+                    res.eventTypes.forEach(e => {
+                        html += `
+                    <span class="package-chip">
+                        ${e.name}
+                        <span class="chip-badge included">Included</span>
+                    </span>
+                `;
+                    });
+
+                    html += `</div></div>`;
+                }
+
+                // Items
+                if (res.items && res.items.length) {
+
+                    const validItems = res.items.filter(i => i.quantity > 0);
+                    if (validItems.length) {
+
+                        html += `
+                    <div class="package-section mt-2">
+                        <div class="package-section-title">Items</div>
+                        <div class="package-chips">
+                `;
+
+                        validItems.forEach(i => {
+                            html += `
+                        <span class="package-chip">
+                            ${i.name}
+                            <span class="chip-badge qty">Qty ${i.quantity}</span>
+                        </span>
+                    `;
+                        });
+
+                        html += `</div></div>`;
                     }
-
-                    setTimeout(() => {
-                        window.location.href = '@Url.Action("Index", "AdminBookings")';
-                    }, 1200);
-                } else {
-                    toastr.warning(res.message || "Unable to save payment.");
                 }
-            },
-            error: function (xhr, status, err) {
-                console.error(err);
-                toastr.error('Error saving payment.');
+
+                $('#packageIncludesList').html(html);
+                $('#packageIncludes').removeClass('d-none');
+            });
+        }
+
+        // Initial load (EDIT VIEW)
+        $(function () {
+            const packageId = $('#PackageId').val();
+            if (packageId) {
+                loadPackageIncludes(packageId);
             }
+
+            $('#PackageId').on('change', function () {
+                const pid = $(this).val();
+                if (pid) {
+                    loadPackageIncludes(pid);
+                }
+            });
         });
-    });
 
-    // Update remaining balance live
-    $('#paymentAmount').on('input', function () {
-        const fullAmount = parseFloat($('#paymentFullAmount').text()) || 0;
-        const prevPaid = parseFloat($('#paymentPrevPaid').text()) || 0;
-        const entered = parseFloat($(this).val()) || 0;
+        $(function () {
 
-        const remaining = fullAmount - prevPaid - entered;
-        $('#paymentBalance').text(remaining.toFixed(2));
-    });
+            if (bookingStatus === 'Canceled') {
+                $('#btnSavePayment').prop('disabled', true)
+                    .addClass('disabled');
 
-});
+                toastr.warning('This booking is canceled. Payments are disabled.');
+
+                $('#paymentModal').on('show.bs.modal', function (e) {
+                    e.preventDefault();
+                });
+            }
+
+            // Populate Payment Modal
+            function populatePaymentModal(res) {
+
+                $('#paymentCustomer').text(res.customerName);
+                $('#paymentFullAmount').text(formatCurrency(res.fullAmount));
+                $('#packageAmount').text(formatCurrency(res.packageAmount));
+                $('#paymentAddonsAmount').text(formatCurrency(res.addonsAmount));
+                $('#paymentPrevPaid').text(formatCurrency(res.prevPaid));
+                $('#paymentTotAddonsAmount').text(formatCurrency(res.totalAddonsAmount));
+
+                const balance = res.fullAmount - res.prevPaid;
+                $('#paymentBalance').text(formatCurrency(balance));
+
+                $('#paymentAmount').val(balance.toFixed(2));
+                $('#paymentForm').find('input[name="PaymentMethod"]').val(res.paymentMethod || '');
+                $('#paymentForm').find('select[name="PaymentType"]').val(res.paymentType || '');
+                $('#paymentForm').find('textarea[name="Remarks"]').val(res.remarks || '');
+
+                // ===============================
+                // EVENT TYPES (FROM DB)
+                // ===============================
+                const $eventList = $('#paymentEventTypesList').empty();
+
+                if (res.eventTypes && res.eventTypes.length) {
+                    res.eventTypes.forEach(e => {
+                        $eventList.append(`
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>${e.name} (x${e.qty})</span>
+                    <span>Rs ${formatCurrency(e.total)}</span>
+                </li>
+            `);
+                    });
+                } else {
+                    $eventList.append(`<li class="list-group-item text-muted">No event types</li>`);
+                }
+
+                // ===============================
+                // ADDONS (PACKAGE + EXTRA)
+                // ===============================
+                const $addonList = $('#paymentAddonsList').empty();
+
+                if (res.addons && res.addons.length) {
+                    res.addons.forEach(a => {
+                        $addonList.append(`
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>${a.name} (x${a.qty})</span>
+                    <span>Rs ${formatCurrency(a.total)}</span>
+                </li>
+            `);
+                    });
+                } else {
+                    $addonList.append(`<li class="list-group-item text-muted">No addons</li>`);
+                }
+            }
+
+            function formatCurrency(amount) {
+                return amount.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            // Handle Booking Form Submit via AJAX
+            $('#bookingForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const btn = $('#btnCreateBooking');
+                setButtonLoading(btn, 'Creating...');
+
+                $.ajax({
+                    url: this.action,
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function (res) {
+
+                        console.log(res);
+
+                        if (!res.success) {
+                            toastr.warning(res.message || 'Validation failed.');
+                            return;
+                        }
+
+                        // open payment modal
+                        if (res.unpaid === true) {
+                            //toastr.warning(res.message);
+                            $('#paymentBookingId').val(res.bookingId);
+                            populatePaymentModal(res);
+                            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+                            modal.show();
+
+                            return;
+                        }
+
+                        if (res.isFullyPaid === true) {
+
+                            const modal = new bootstrap.Modal(
+                                document.getElementById('fullyPaidModal')
+                            );
+                            modal.show();
+
+                            $('#btnFullyPaidOk').off('click').on('click', function () {
+                                window.location.href = '@Url.Action("Index", "AdminBookings")';
+                            });
+
+                            return;
+                        }
+
+
+                        toastr.success(res.message || 'Booking updated successfully!');
+                        window.location.href = '@Url.Action("Index", "AdminBookings")';
+                    },
+                    error: function () {
+                        toastr.error('Something went wrong while saving.');
+                    }
+                });
+            });
+
+
+            // Save Payment via AJAX
+            $('#btnSavePayment').on('click', function () {
+                const paymentData = $('#paymentForm').serialize();
+
+                const btn = $(this);
+                setButtonLoading(btn, 'Saving...');
+
+                $.ajax({
+                    url: '@Url.Action("SavePayment", "AdminBookings")',
+                    type: 'POST',
+                    data: paymentData,
+                    success: function (res) {
+                        if (res.success) {
+                            toastr.success(res.message || "Payment saved!");
+                            $('#paymentModal').modal('hide');
+
+                            if (res.invoiceUrl) {
+                                window.open(res.invoiceUrl, "_blank");
+                            }
+
+                            setTimeout(() => {
+                                window.location.href = '@Url.Action("Index", "AdminBookings")';
+                            }, 1200);
+                        } else {
+                            toastr.warning(res.message || "Unable to save payment.");
+                        }
+                    },
+                    error: function (xhr, status, err) {
+                        console.error(err);
+                        toastr.error('Error saving payment.');
+                    }
+                });
+            });
+
+            //// Update remaining balance live
+            $('#paymentAmount').on('input', function () {
+                const fullAmount = parseCurrency($('#paymentFullAmount').text());
+                const prevPaid = parseCurrency($('#paymentPrevPaid').text());
+                const entered = parseFloat($(this).val()) || 0;
+
+                const remaining = fullAmount - prevPaid - entered;
+                $('#paymentBalance').text(formatCurrency(remaining));
+            });
+
+            function parseCurrency(text) {
+                return parseFloat(
+                    text.replace(/[^0-9.-]+/g, '')
+                ) || 0;
+            }
+
+        });
+
+        $('#IsCanceled').on('change', function () {
+            $(this).next('label').text(this.checked ? 'Canceled' : 'Active');
+        });
+        function toggleBookingForm(isCanceled) {
+            $('#bookingForm')
+                .find('input, select, textarea')
+                .not('#IsCanceled')
+                .not('input[name="__RequestVerificationToken"]')
+                .not('input[name="BookingId"]')
+                .prop('disabled', isCanceled);
+
+            $('#btnSaveBooking').prop('disabled', false);
+        }
+
+        toggleBookingForm(@(Model.Status == "Cancelled" ? "true" : "false"));
+
+        $('#IsCanceled').on('change', function () {
+            toggleBookingForm(this.checked);
+        });
+
     </script>
 }
 
@@ -520,6 +945,68 @@ $(function () {
             .booking-edit-card {
                 padding: 2rem;
             }
+        }
+
+        /* Package Includes – FIXED layout */
+
+        .package-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .package-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .package-chip {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            white-space: nowrap;
+        }
+
+        .chip-badge {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+            .chip-badge.included {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .chip-badge.qty {
+                background: #e0f2fe;
+                color: #075985;
+            }
+
+
+        #paymentEventTypesList .list-group-item,
+        #paymentAddonsList .list-group-item {
+            padding: 4px 0;
+            border: none;
+        }
+        /*cancel booking*/
+        .icon-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
         }
     </style>
 }
