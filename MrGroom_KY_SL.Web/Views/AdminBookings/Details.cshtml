@@ -194,20 +194,20 @@
         </div>
 
         @*<div class="col-md-4">
-            <div class="card-modern p-4 h-100">
-                <h5 class="section-title"><i class="bi bi-stars me-2"></i> Event Type</h5>
-                <dl class="row mb-0">
-                    <dt class="col-sm-5"><strong>Name</strong></dt>
-                    <dd class="col-sm-7">@Model.EventType.Name</dd>
+                <div class="card-modern p-4 h-100">
+                    <h5 class="section-title"><i class="bi bi-stars me-2"></i> Event Type</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5"><strong>Name</strong></dt>
+                        <dd class="col-sm-7">@Model.EventType.Name</dd>
 
-                    <dt class="col-sm-5"><strong>Price</strong></dt>
-                    <dd class="col-sm-7">@String.Format("Rs {0:N2}", Model.EventType?.Price ?? 0)</dd>
+                        <dt class="col-sm-5"><strong>Price</strong></dt>
+                        <dd class="col-sm-7">@String.Format("Rs {0:N2}", Model.EventType?.Price ?? 0)</dd>
 
-                    <dt class="col-sm-5"><strong>Active</strong></dt>
-                    <dd class="col-sm-7">@(Model.EventType?.IsActive == true ? "Yes" : "No")</dd>
-                </dl>
-            </div>
-        </div>*@
+                        <dt class="col-sm-5"><strong>Active</strong></dt>
+                        <dd class="col-sm-7">@(Model.EventType?.IsActive == true ? "Yes" : "No")</dd>
+                    </dl>
+                </div>
+            </div>*@
 
         <div class="col-md-4">
             <div class="card-modern p-4 h-100">
@@ -258,6 +258,144 @@
     }
 
     <div class="divider"></div>
+
+    @{
+        decimal eventTypesTotal = 0m;
+        decimal addonsTotal = 0m;
+    }
+
+    <div class="divider"></div>
+
+    <h5 class="section-title">
+        <i class="bi bi-plus-circle-fill me-2"></i> Addons
+    </h5>
+
+    <div class="card-modern p-4 mb-5">
+
+        <!-- ================= EVENT TYPES ================= -->
+        @if (Model.BookingEventTypes != null && Model.BookingEventTypes.Any())
+        {
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-stars me-2"></i> Event Types
+            </h6>
+
+            <div class="table-responsive mb-4">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Event Type</th>
+                            <th class="text-center">Quantity</th>
+                            <th class="text-end">Unit Price</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-center">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var grp in Model.BookingEventTypes.GroupBy(x => x.EventType))
+                        {
+                            var selectedQty = grp.Count();
+
+                            var packageQty = Model.Package?.PackageEventTypes
+                                ?.Count(p => p.EventTypeId == grp.Key.EventTypeId) ?? 0;
+
+                            var chargeableQty = selectedQty - packageQty;
+                            var unitPrice = grp.Key.Price;
+                            var rowTotal = selectedQty * unitPrice;
+
+                            eventTypesTotal += chargeableQty > 0
+                                ? chargeableQty * unitPrice
+                                : 0;
+
+                            <tr>
+                                <td><strong>@grp.Key.Name</strong></td>
+                                <td class="text-center">@selectedQty</td>
+                                <td class="text-end">@String.Format("Rs {0:N2}", unitPrice)</td>
+                                <td class="text-end">@String.Format("Rs {0:N2}", rowTotal)</td>
+                                <td class="text-center">
+                                    @if (chargeableQty <= 0)
+                                    {
+                                        <span class="badge bg-success">Included</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            Extra (@chargeableQty)
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- ================= PACKAGE ADDONS ================= -->
+        @if (Model.BookingAddons != null && Model.BookingAddons.Any())
+        {
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-box-seam me-2"></i> Package Addons
+            </h6>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Addon</th>
+                            <th class="text-center">Quantity</th>
+                            <th class="text-end">Unit Price</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-center">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var addon in Model.BookingAddons)
+                        {
+                            var packageQty = Model.Package?.PackageItemPackages
+                                ?.FirstOrDefault(p => p.PackageItemId == addon.PackageItemId)?.Qty ?? 0;
+
+                            var chargeableQty = addon.Quantity - packageQty;
+                            var rowTotal = addon.Quantity * addon.UnitPrice;
+
+                            if (chargeableQty > 0)
+                            {
+                                addonsTotal += chargeableQty * addon.UnitPrice;
+                            }
+
+                            <tr>
+                                <td><strong>@addon.PackageItem.Name</strong></td>
+                                <td class="text-center">@addon.Quantity</td>
+                                <td class="text-end">@String.Format("Rs {0:N2}", addon.UnitPrice)</td>
+                                <td class="text-end">@String.Format("Rs {0:N2}", rowTotal)</td>
+                                <td class="text-center">
+                                    @if (chargeableQty <= 0)
+                                    {
+                                        <span class="badge bg-success">Included</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Extra</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- ================= ADDONS TOTAL ================= -->
+        <div class="text-end mt-4 pt-3 border-top">
+            <h5 class="fw-bold">
+                Addons Total :
+                <span class="text-primary">
+                    @String.Format("Rs {0:N2}", eventTypesTotal + addonsTotal)
+                </span>
+            </h5>
+        </div>
+    </div>
+
+
 
     <!-- Staff Members -->
     <h5 class="section-title"><i class="bi bi-people-fill me-2"></i> Assigned Staff</h5>
