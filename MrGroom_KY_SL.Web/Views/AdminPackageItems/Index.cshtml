@@ -29,11 +29,12 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Total Items</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count()</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.TotalItems</h3>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-md-3 col-sm-6">
         <div class="card stat-card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center">
@@ -42,11 +43,12 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Active Items</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count(i => i.IsActive ?? false)</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.ActiveItems</h3>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-md-3 col-sm-6">
         <div class="card stat-card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center">
@@ -55,11 +57,12 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Inactive Items</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count(i => !(i.IsActive ?? false))</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.InactiveItems</h3>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-md-3 col-sm-6">
         <div class="card stat-card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center">
@@ -68,12 +71,15 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Total Value (Rs)</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Sum(i => i.Price)</h3>
+                    <h3 class="mb-0 fw-bold">
+                        @ViewBag.TotalValue.ToString("N2")
+                    </h3>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <hr class="soft-gradient-line" />
 

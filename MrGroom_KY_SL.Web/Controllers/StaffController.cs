@@ -27,23 +27,34 @@ namespace MrGroom_KY_SL.Web.Controllers
                 int pageSize = 5;
                 bool isManageMode = !string.IsNullOrEmpty(manage);
 
-                var staffList = _staffService.GetAll();
+                var staffQuery = _staffService.GetAll();
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     searchTerm = searchTerm.ToLower();
-                    staffList = staffList.Where(s =>
+                    staffQuery = staffQuery.Where(s =>
                         s.Name.ToLower().Contains(searchTerm) ||
-                        (s.Email != null && s.Email.ToLower().Contains(searchTerm)) ||
-                        (s.Role != null && s.Role.ToLower().Contains(searchTerm)) ||
-                        (s.Phone != null && s.Phone.ToLower().Contains(searchTerm))
+                        (!string.IsNullOrEmpty(s.Email) && s.Email.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(s.Role) && s.Role.ToLower().Contains(searchTerm)) ||
+                        (!string.IsNullOrEmpty(s.Phone) && s.Phone.ToLower().Contains(searchTerm))
                     );
                 }
 
-                int totalItems = staffList.Count();
+                // Summary Counts (All Staff)
+                ViewBag.TotalStaff = staffQuery.Count();
+                ViewBag.ActiveStaff = staffQuery.Count(s => s.IsActive == true);
+                ViewBag.InactiveStaff = staffQuery.Count(s => s.IsActive != true);
+                ViewBag.RoleCount = staffQuery
+                    .Where(s => !string.IsNullOrEmpty(s.Role))
+                    .Select(s => s.Role)
+                    .Distinct()
+                    .Count();
+
+                // Pagination
+                int totalItems = ViewBag.TotalStaff;
                 int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-                var pageData = staffList
+                var pageData = staffQuery
                     .OrderBy(s => s.StaffId)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -211,10 +222,10 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                 return View(staff);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 TempData["ToastrType"] = "error";
-                TempData["ToastrMessage"] = "Unable to load staff details.";
+                TempData["ToastrMessage"] = "Unable to load staff details." + ex.Message;
                 return RedirectToAction("Index");
             }
         }

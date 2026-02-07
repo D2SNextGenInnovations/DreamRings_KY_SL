@@ -25,12 +25,12 @@ namespace MrGroom_KY_SL.Web.Controllers
                 int pageSize = 5;
                 bool isManageMode = !string.IsNullOrEmpty(manage);
 
-                var customers = _customerService.GetAll();
+                var customersQuery = _customerService.GetAll();
 
-                if (!string.IsNullOrEmpty(searchTerm))
+                if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     searchTerm = searchTerm.ToLower();
-                    customers = customers.Where(c =>
+                    customersQuery = customersQuery.Where(c =>
                         c.FirstName.ToLower().Contains(searchTerm) ||
                         (!string.IsNullOrEmpty(c.LastName) && c.LastName.ToLower().Contains(searchTerm)) ||
                         (!string.IsNullOrEmpty(c.Email) && c.Email.ToLower().Contains(searchTerm)) ||
@@ -38,10 +38,22 @@ namespace MrGroom_KY_SL.Web.Controllers
                     );
                 }
 
-                int totalItems = customers.Count();
+                // Summary counts (All records)
+                ViewBag.TotalCustomers = customersQuery.Count();
+                ViewBag.WithEmailCount = customersQuery.Count(c => !string.IsNullOrEmpty(c.Email));
+                ViewBag.WithPhoneCount = customersQuery.Count(c => !string.IsNullOrEmpty(c.Phone));
+                ViewBag.UniqueCityCount = customersQuery
+                    .SelectMany(c => c.Addresses)
+                    .Where(a => !string.IsNullOrEmpty(a.City))
+                    .Select(a => a.City)
+                    .Distinct()
+                    .Count();
+
+                // Pagination
+                int totalItems = ViewBag.TotalCustomers;
                 int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-                var pageCustomers = customers
+                var pageCustomers = customersQuery
                     .OrderByDescending(c => c.CreatedAt)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)

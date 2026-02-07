@@ -104,19 +104,10 @@
                     </div>
 
                     <div class="form-group mb-3">
-                        <label class="form-label fw-semibold">Postal Code</label>
-                        <div class="input-group">
-                            <span class="input-group-text icon-gradient"><i class="bi bi-mailbox"></i></span>
-                            @Html.TextBoxFor(m => m.PostalCode, new { @class = "form-control", placeholder = "Enter postal code" })
-                        </div>
-                        @Html.ValidationMessageFor(m => m.PostalCode, "", new { @class = "modern-error" })
-                    </div>
-
-                    <div class="form-group mb-3">
                         <label class="form-label fw-semibold">Country</label>
                         <div class="input-group">
                             <span class="input-group-text icon-gradient"><i class="bi bi-globe"></i></span>
-                            @Html.TextBoxFor(m => m.Country, new { @class = "form-control", placeholder = "Enter country" })
+                            @Html.TextBoxFor(m => m.Country, new { @class = "form-control", @Value = "Sri Lanka", @disabled = "disabled" })
                         </div>
                         @Html.ValidationMessageFor(m => m.Country, "", new { @class = "modern-error" })
                     </div>
@@ -165,8 +156,13 @@
         }
 
         @@keyframes bgShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
         }
 
         .customer-create-card {
@@ -205,8 +201,15 @@
         }
 
         @@keyframes fadeInError {
-            from { opacity: 0; transform: translateY(-3px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-3px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .is-invalid {
@@ -219,9 +222,17 @@
         }
 
         @@keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
+            0%, 100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
         }
 
         .modern-validation {

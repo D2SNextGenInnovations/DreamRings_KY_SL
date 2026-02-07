@@ -1,5 +1,10 @@
 ﻿@*@model MrGroom_KY_SL.Models.Booking*@
 @model MrGroom_KY_SL.Web.Models.BookingCreateViewModel
+
+    <p style="color:red;font-weight:bold">
+        DEBUG EventDate: @Model.EventDate
+    </p>
+
 @using MrGroom_KY_SL.Web.Models
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -15,9 +20,11 @@
             <p class="text-muted">Add a new booking with elegance and flair ✨</p>
         </div>
 
-        @using (Html.BeginForm("Create", "AdminBookings", FormMethod.Post, new { id = "bookingForm" }))
+        @*@using (Html.BeginForm("Create", "AdminBookings", FormMethod.Post, new { id = "bookingForm" }))*@
+        @using (Html.BeginForm(Model.BookingId > 0 ? "Edit" : "Create", "AdminBookings", FormMethod.Post, new { id = "bookingForm" }))
         {
             @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.BookingId)
 
             <!-- Customer -->
             <div class="form-group mb-4">
@@ -59,12 +66,14 @@
                 <label class="form-label fw-semibold">Event Date</label>
                 <div class="input-group">
                     <span class="input-group-text icon-gradient"><i class="bi bi-calendar3"></i></span>
-                    @Html.TextBoxFor(m => m.EventDate, new { @class = "form-control", type = "date" })
+                    @*@Html.TextBoxFor(m => m.EventDate, new { @class = "form-control", type = "date" })*@
+                    @Html.TextBoxFor(m => m.EventDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
+
                 </div>
                 @Html.ValidationMessageFor(m => m.EventDate, "", new { @class = "text-danger small" })
             </div>
 
-           <!-- Event Location -->
+            <!-- Event Location -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Location</label>
                 <div class="input-group">
@@ -77,119 +86,124 @@
             </div>
 
             <!-- Assign Staff -->
-                <div class="form-group mb-4">
-                    <label class="form-label fw-semibold">Assign Staff (required)</label>
-                    @*@Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.SelectedStaffIds, new { @class = "form-control", size = 6 })*@
-                    @Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })
-                    @Html.ValidationMessageFor(m => m.SelectedStaffIds, "", new { @class = "text-danger small" })
-                </div>
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Assign Staff (optional)</label>
+                @*@Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.SelectedStaffIds, new { @class = "form-control", size = 6 })*@
+                @Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })
+                @Html.ValidationMessageFor(m => m.SelectedStaffIds, "", new { @class = "text-danger small" })
+            </div>
 
             <!-- Toggle Button -->
-                <div class="mb-4 text-center">
-                    <button type="button"
-                            id="btnToggleAddons"
-                            class="btn btn-glow px-4 py-2">
-                        <i class="bi bi-plus-circle me-2"></i>
-                        Add Extras (Event Types & Items)
-                    </button>
-                </div>
+            <div class="mb-4 text-center">
+                <button type="button"
+                        id="btnToggleAddons"
+                        class="btn btn-glow px-4 py-2">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add Extras (Event Types & Items)
+                </button>
+            </div>
 
-           <!-- Addons section-->
-                <div id="addonsSection" style="display:none;">
+            <!-- Addons section-->
+            <div id="addonsSection" style="display:none;">
 
-                    <div class="card shadow-sm border-0 mt-4">
-                        <div class="card-body">
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-body">
 
-                            <h5 class="fw-bold mb-3">
-                                <i class="bi bi-stars text-primary me-2"></i>
-                                Addons
-                            </h5>
-                            <p class="text-muted small mb-4">
-                                Select event types (one-time) and optional add-on items (per unit) to enhance the booking.
-                            </p>
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-stars text-primary me-2"></i>
+                            Addons
+                        </h5>
+                        <p class="text-muted small mb-4">
+                            Select event types (one-time) and optional add-on items (per unit) to enhance the booking.
+                        </p>
 
-                            @{
-                                var index = 0;
+                        @{
+                            var index = 0;
+                        }
+
+                        <div class="list-group list-group-flush">
+
+                            <!-- Event Types-->
+                            @if (ViewBag.EventTypes != null && ((IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes).Any())
+                            {
+                                <div class="list-group-item bg-primary text-white fw-bold">
+                                    Event Types
+                                </div>
+
+                                foreach (var et in (IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes)
+                                {
+                                    var isChecked = Model.SelectedEventTypeIds?.Contains(et.EventTypeId) ?? false;
+                                    <label class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">@et.Name</div>
+                                            <small class="text-muted">One-time charge</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold">Rs @et.Price</div>
+                                            <input type="checkbox"
+                                                   class="form-check-input mt-1 event-type-checkbox"
+                                                   name="SelectedEventTypeIds"
+                                                   value="@et.EventTypeId"
+                                                   data-eventtype-id="@et.EventTypeId"
+                                                   @(isChecked ? "checked" : "") />
+                                        </div>
+                                    </label>
+                                }
+
                             }
 
-                            <div class="list-group list-group-flush">
+                            <!-- Addons-->
+                            @if (ViewBag.PackageItems != null && ((IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems).Any())
+                            {
+                                <div class="list-group-item bg-success text-white fw-bold mt-3">
+                                    Package Items
+                                </div>
 
-                                <!-- Event Types-->
-                                @if (ViewBag.EventTypes != null && ((IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes).Any())
+                                foreach (var item in (IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems)
                                 {
-                                    <div class="list-group-item bg-primary text-white fw-bold">
-                                        Event Types
-                                    </div>
+                                    var existingAddon = Model.SelectedAddons?.FirstOrDefault(a => a.PackageItemId == item.PackageItemId);
+                                    int quantity = existingAddon?.Quantity ?? 0;
 
-                                    foreach (var et in (IEnumerable<MrGroom_KY_SL.Models.EventType>)ViewBag.EventTypes)
-                                    {
-                                        <label class="list-group-item d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="fw-semibold">@et.Name</div>
-                                                <small class="text-muted">One-time charge</small>
-                                            </div>
-                                            <div class="text-end">
-                                                <div class="fw-bold">Rs @et.Price</div>
-
-                                                <input type="checkbox"
-                                                       class="form-check-input mt-1 event-type-checkbox"
-                                                       name="SelectedEventTypeIds"
-                                                       value="@et.EventTypeId"
-                                                       data-eventtype-id="@et.EventTypeId" />
-                                            </div>
-                                        </label>
-                                    }
-                                }
-
-                                <!-- Addons-->
-                                @if (ViewBag.PackageItems != null && ((IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems).Any())
-                                {
-                                    <div class="list-group-item bg-success text-white fw-bold mt-3">
-                                        Package Items
-                                    </div>
-
-                                    foreach (var item in (IEnumerable<MrGroom_KY_SL.Models.PackageItem>)ViewBag.PackageItems)
-                                    {
-                                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="fw-semibold">@item.Name</div>
-                                                <small class="text-muted">Per unit</small>
-                                            </div>
-                                            <div class="text-end d-flex align-items-center gap-2">
-                                                <div class="fw-bold">Rs @item.Price</div>
-                                                <input type="number"
-                                                       class="form-control form-control-sm text-center addon-qty"
-                                                       data-packageitem-id="@item.PackageItemId"
-                                                       name="SelectedAddons[@index].Quantity"
-                                                       value="0"
-                                                       min="0"
-                                                       style="width:70px" />
-
-                                                <input type="hidden"
-                                                       name="SelectedAddons[@index].PackageItemId"
-                                                       value="@item.PackageItemId" />
-                                            </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="fw-semibold">@item.Name</div>
+                                            <small class="text-muted">Per unit</small>
                                         </div>
-                                        index++;
-                                    }
+                                        <div class="text-end d-flex align-items-center gap-2">
+                                            <div class="fw-bold">Rs @item.Price</div>
+                                            <input type="number"
+                                                   class="form-control form-control-sm text-center addon-qty"
+                                                   data-packageitem-id="@item.PackageItemId"
+                                                   name="SelectedAddons[@index].Quantity"
+                                                   value="@quantity"
+                                                   min="0"
+                                                   style="width:70px" />
+                                            <input type="hidden"
+                                                   name="SelectedAddons[@index].PackageItemId"
+                                                   value="@item.PackageItemId" />
+                                        </div>
+                                    </div>
+                                    index++;
                                 }
 
-                            </div>
-
-                            @Html.ValidationMessageFor(m => m.SelectedEventTypeIds, "", new { @class = "text-danger small mt-3 d-block" })
+                            }
 
                         </div>
+
+                        @Html.ValidationMessageFor(m => m.SelectedEventTypeIds, "", new { @class = "text-danger small mt-3 d-block" })
+
                     </div>
                 </div>
+            </div>
 
             <!-- Buttons -->
-                                <div class="text-end mt-5 d-flex justify-content-end gap-3">
-                                    @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
-                                    <button type="submit" id="btnCreateBooking" class="btn btn-glow px-4">
-                                        <i class="bi bi-save"></i> Create
-                                    </button>
-                                </div>
-                                }
+            <div class="text-end mt-5 d-flex justify-content-end gap-3">
+                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
+                <button type="submit" id="btnCreateBooking" class="btn btn-glow px-4">
+                    <i class="bi bi-save"></i> Create
+                </button>
+            </div>
+        }
     </div>
 </div>
 

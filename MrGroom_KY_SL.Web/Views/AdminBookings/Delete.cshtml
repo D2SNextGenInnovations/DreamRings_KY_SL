@@ -25,7 +25,7 @@
                 <dd class="col-sm-8 fw-semibold">@Model.Customer.FirstName</dd>
 
                 <dt class="col-sm-4">Event Date</dt>
-                <dd class="col-sm-8 fw-semibold">@Model.EventDate.ToString("dd MMM yyyy")</dd>
+                <dd class="col-sm-8 fw-semibold">@Model.EventDate?.ToString("dd MMM yyyy")</dd>
             </dl>
         </div>
 

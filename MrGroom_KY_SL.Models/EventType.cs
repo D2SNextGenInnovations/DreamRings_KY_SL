@@ -22,7 +22,6 @@ namespace MrGroom_KY_SL.Models
         public Nullable<bool> IsActive { get; set; } = true;
 
         public virtual ICollection<Booking> Bookings { get; set; }
-        //public virtual ICollection<PackageEventType> PackageEventTypes { get; set; } = new List<PackageEventType>();
         public virtual ICollection<BookingEventType> BookingEventTypes { get; set; } = new List<BookingEventType>();
     }
 }

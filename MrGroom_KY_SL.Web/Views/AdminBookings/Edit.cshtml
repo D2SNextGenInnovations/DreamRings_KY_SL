@@ -22,7 +22,7 @@
             @Html.AntiForgeryToken()
             @Html.HiddenFor(m => m.BookingId)
 
-        <!-- Customer -->
+            <!-- Customer -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Customer</label>
                 <div class="input-group">
@@ -33,7 +33,7 @@
                 @Html.ValidationMessageFor(m => m.CustomerId, "", new { @class = "text-danger small" })
             </div>
 
-        <!-- Package -->
+            <!-- Package -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Package</label>
                 <div class="input-group">
@@ -45,7 +45,7 @@
             </div>
 
 
-        <!-- Package Includes -->
+            <!-- Package Includes -->
             <div id="packageIncludes"
                  class="border rounded-3 p-3 mt-2 mb-4 bg-light d-none">
 
@@ -58,18 +58,21 @@
                 <div id="packageIncludesList"></div>
             </div>
 
-        <!-- Event Date -->
+            <!-- Event Date -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Event Date</label>
                 <div class="input-group">
-                    <span class="input-group-text icon-gradient"><i class="bi bi-calendar3"></i></span>
-                    @*@Html.TextBoxFor(m => m.EventDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date", Value = ViewBag.EventDateFormatted })*@
-                    @Html.TextBoxFor(m => m.EventDate, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })
+                    <span class="input-group-text icon-gradient">
+                        <i class="bi bi-calendar3"></i>
+                    </span>
+
+                    @Html.TextBox("EventDate", Model.EventDate?.ToString("yyyy-MM-dd"), new { @class = "form-control", type = "date" })
                 </div>
                 @Html.ValidationMessageFor(m => m.EventDate, "", new { @class = "text-danger small" })
             </div>
 
-        <!-- Event Location -->
+
+            <!-- Event Location -->
             <div class="form-group mb-4">
                 <label class="form-label fw-semibold">Location</label>
                 <div class="input-group">
@@ -81,9 +84,9 @@
                 @Html.ValidationMessageFor(m => m.Location, "", new { @class = "text-danger small" })
             </div>
 
-        <!-- Assign Staff -->
+            <!-- Assign Staff -->
             <div class="form-group mb-4">
-                <label class="form-label fw-semibold">Assign Staff (required)</label>
+                <label class="form-label fw-semibold">Assign Staff (optional)</label>
                 @*@Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })*@
                 @Html.ListBoxFor(m => m.SelectedStaffIds, (MultiSelectList)ViewBag.StaffList, new { @class = "form-control", size = 6 })
                 @Html.ValidationMessageFor(m => m.SelectedStaffIds, "", new { @class = "text-danger small" })
@@ -98,7 +101,7 @@
                 </button>
             </div>
 
-             <!-- Addons section-->
+            <!-- Addons section-->
             <div id="addonsSection" style="display:none;">
 
                 <div class="card shadow-sm border-0 mt-4">
@@ -139,7 +142,8 @@
                                                    class="form-check-input mt-1 event-type-checkbox"
                                                    name="SelectedEventTypeIds"
                                                    value="@et.EventTypeId"
-                                                   data-eventtype-id="@et.EventTypeId" />
+                                                   @(Model.SelectedEventTypeIds != null && Model.SelectedEventTypeIds.Contains(et.EventTypeId) ? "checked" : "") />
+
                                         </div>
                                     </label>
                                 }
@@ -159,13 +163,20 @@
                                             <div class="fw-semibold">@item.Name</div>
                                             <small class="text-muted">Per unit</small>
                                         </div>
+                                        @{
+                                            var selectedAddon = Model.SelectedAddons?
+                                                .FirstOrDefault(a => a.PackageItemId == item.PackageItemId);
+
+                                            var qty = selectedAddon?.Quantity ?? 0;
+                                        }
+
                                         <div class="text-end d-flex align-items-center gap-2">
                                             <div class="fw-bold">Rs @item.Price</div>
                                             <input type="number"
                                                    class="form-control form-control-sm text-center addon-qty"
                                                    data-packageitem-id="@item.PackageItemId"
                                                    name="SelectedAddons[@index].Quantity"
-                                                   value="0"
+                                                   value="@qty"
                                                    min="0"
                                                    style="width:70px" />
 
@@ -186,52 +197,52 @@
                 </div>
             </div>
 
-        <!-- Cancel Booking Switch -->
-                            <div class="card border-0 shadow-sm mb-4">
-                                <div class="card-body d-flex justify-content-between align-items-center">
+            <!-- Cancel Booking Switch -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body d-flex justify-content-between align-items-center">
 
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="icon-circle bg-danger-subtle text-danger">
-                                            <i class="bi bi-x-circle"></i>
-                                        </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-circle bg-danger-subtle text-danger">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
 
-                                        <div>
-                                            <div class="fw-semibold text-danger">
-                                                Cancel Booking
-                                            </div>
-                                            <small class="text-muted">
-                                                Marking this booking as canceled will disable payments and updates
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    <div class="form-check form-switch text-end">
-                                        <input type="checkbox"
-                                               class="form-check-input"
-                                               id="IsCanceled"
-                                               name="IsCanceled"
-                                               value="true"
-                                               @(isCanceled ? "checked" : "") />
-
-                                        <label class="form-check-label fw-semibold ms-2" for="IsCanceled">
-                                            @(isCanceled ? "Cancelled" : "Active")
-                                        </label>
-                                    </div>
-
-                                </div>
+                        <div>
+                            <div class="fw-semibold text-danger">
+                                Cancel Booking
                             </div>
+                            <small class="text-muted">
+                                Marking this booking as canceled will disable payments and updates
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch text-end">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               id="IsCanceled"
+                               name="IsCanceled"
+                               value="true"
+                               @(isCanceled ? "checked" : "") />
+
+                        <label class="form-check-label fw-semibold ms-2" for="IsCanceled">
+                            @(isCanceled ? "Cancelled" : "Active")
+                        </label>
+                    </div>
+
+                </div>
+            </div>
 
 
 
-        <!-- Buttons -->
-                            <div class="text-end mt-5 d-flex justify-content-end gap-3">
-                                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
-                                <button type="submit" id="btnCreateBooking" class="btn btn-glow px-4">
-                                    <i class="bi bi-save"></i> Save Changes
-                                </button>
+            <!-- Buttons -->
+            <div class="text-end mt-5 d-flex justify-content-end gap-3">
+                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
+                <button type="submit" id="btnCreateBooking" class="btn btn-glow px-4">
+                    <i class="bi bi-save"></i> Save Changes
+                </button>
 
-                            </div>
-                            }
+            </div>
+        }
     </div>
 </div>
 
@@ -573,16 +584,9 @@
         });
 
         $(function () {
-
-            if (bookingStatus === 'Canceled') {
-                $('#btnSavePayment').prop('disabled', true)
-                    .addClass('disabled');
-
+            if (bookingStatus === 'Cancelled') {
+                $('#btnSavePayment').prop('disabled', true);
                 toastr.warning('This booking is canceled. Payments are disabled.');
-
-                $('#paymentModal').on('show.bs.modal', function (e) {
-                    e.preventDefault();
-                });
             }
 
             // Populate Payment Modal
@@ -664,6 +668,7 @@
 
                         if (!res.success) {
                             toastr.warning(res.message || 'Validation failed.');
+                            resetButton(btn);
                             return;
                         }
 
@@ -675,6 +680,7 @@
                             const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
                             modal.show();
 
+                            resetButton(btn);
                             return;
                         }
 
@@ -689,6 +695,7 @@
                                 window.location.href = '@Url.Action("Index", "AdminBookings")';
                             });
 
+                            resetButton(btn);
                             return;
                         }
 
@@ -698,6 +705,7 @@
                     },
                     error: function () {
                         toastr.error('Something went wrong while saving.');
+                        resetButton(btn);
                     }
                 });
             });
@@ -728,11 +736,13 @@
                             }, 1200);
                         } else {
                             toastr.warning(res.message || "Unable to save payment.");
+                            resetButton(btn);
                         }
                     },
                     error: function (xhr, status, err) {
                         console.error(err);
                         toastr.error('Error saving payment.');
+                        resetButton(btn);
                     }
                 });
             });
@@ -774,6 +784,13 @@
         $('#IsCanceled').on('change', function () {
             toggleBookingForm(this.checked);
         });
+
+        $(function() {
+    if (@(Model.SelectedAddons?.Any() == true ? "true" : "false") || @(Model.SelectedEventTypeIds?.Any() == true ? "true" : "false")) {
+        $('#addonsSection').show();
+        $('#btnToggleAddons').html('<i class="bi bi-dash-circle"></i> Hide Items / Event Types');
+    }
+});
 
     </script>
 }

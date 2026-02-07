@@ -29,7 +29,9 @@ namespace MrGroom_KY_SL.Models
         public virtual Package Package { get; set; }
 
         [Required(ErrorMessage = "Event date is required")]
-        public DateTime EventDate { get; set; }
+        //public DateTime EventDate { get; set; }
+        public DateTime? EventDate { get; set; }
+
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
 
         [StringLength(50)]
@@ -49,21 +51,30 @@ namespace MrGroom_KY_SL.Models
 
         [NotMapped]
         public decimal TotalPaid => Payments?.Sum(p => p.Amount) ?? 0;
+
         [NotMapped]
-        public decimal RemainingAmount => (Package?.BasePrice ?? 0) - (Payments?.Sum(p => p.Amount) ?? 0);
+        public decimal EventTypesTotal => BookingEventTypes?.Sum(e => e.EventType.Price) ?? 0;
+
+        [NotMapped]
+        public decimal GrandTotal => (Package?.BasePrice ?? 0) + EventTypesTotal + AddonsTotal;
+
+        [NotMapped]
+        public decimal RemainingAmount => GrandTotal - (Payments?.Sum(p => p.Amount) ?? 0);
+
+
         [NotMapped]
         public string PaymentStatus
         {
             get
             {
-                decimal packagePrice = Package?.BasePrice ?? 0;
+                decimal total = GrandTotal;
                 decimal paid = Payments?.Sum(p => p.Amount) ?? 0;
 
                 if (paid == 0) return "Unpaid";
-                if (paid < packagePrice / 2) return "Advance";
-                if (paid < packagePrice) return "Half";
-                if (paid >= packagePrice) return "Full";
-                return "Partial";
+                if (paid < total / 2) return "Advance";
+                if (paid < total) return "Half";
+                return "Full";
+
             }
         }
 
@@ -76,9 +87,5 @@ namespace MrGroom_KY_SL.Models
 
         [NotMapped]
         public decimal AddonsTotal => BookingAddons?.Sum(a => a.Quantity * a.UnitPrice) ?? 0;
-
-        [NotMapped]
-        public decimal GrandTotal => (Package?.BasePrice ?? 0) + BookingEventTypes.Sum(e => e.EventType.Price) + AddonsTotal;
-
     }
 }

@@ -37,21 +37,28 @@ namespace MrGroom_KY_SL.Web.Controllers
                 int pageSize = 5;
                 bool isManageMode = !string.IsNullOrEmpty(manage);
 
-                var packages = _packageService.GetAll();
+                var packageQuery = _packageService.GetAll();
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     searchTerm = searchTerm.ToLower();
-                    packages = packages.Where(p =>
+                    packageQuery = packageQuery.Where(p =>
                         p.Name.ToLower().Contains(searchTerm) ||
-                        (p.Description != null && p.Description.ToLower().Contains(searchTerm))
+                        (!string.IsNullOrEmpty(p.Description) && p.Description.ToLower().Contains(searchTerm))
                     );
                 }
 
-                int totalItems = packages.Count();
+                // Summary Counts (All Packageas)
+                ViewBag.TotalPackages = packageQuery.Count();
+                ViewBag.ActivePackages = packageQuery.Count(p => p.IsActive);
+                ViewBag.InactivePackages = packageQuery.Count(p => !p.IsActive);
+                ViewBag.TotalPackageValue = packageQuery.Sum(p => (decimal?)p.BasePrice) ?? 0;
+
+                // Pagination
+                int totalItems = ViewBag.TotalPackages;
                 int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-                var pageData = packages
+                var pageData = packageQuery
                     .OrderBy(p => p.PackageId)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -67,7 +74,7 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                 return View(pageData);
             }
-            catch (Exception)
+            catch
             {
                 TempData["ToastrType"] = "error";
                 TempData["ToastrMessage"] = "Failed to load packages. Please try again later.";

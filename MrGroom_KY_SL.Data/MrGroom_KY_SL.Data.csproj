@@ -144,6 +144,10 @@
     <Compile Include="Migrations\202601200149118_AddPreviousStatusToBookings.designer.cs">
       <DependentUpon>202601200149118_AddPreviousStatusToBookings.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202602051516312_AddPartialPaymentsSupport.cs" />
+    <Compile Include="Migrations\202602051516312_AddPartialPaymentsSupport.designer.cs">
+      <DependentUpon>202602051516312_AddPartialPaymentsSupport.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\IRepository.cs" />
@@ -210,6 +214,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202601200149118_AddPreviousStatusToBookings.resx">
       <DependentUpon>202601200149118_AddPreviousStatusToBookings.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202602051516312_AddPartialPaymentsSupport.resx">
+      <DependentUpon>202602051516312_AddPartialPaymentsSupport.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

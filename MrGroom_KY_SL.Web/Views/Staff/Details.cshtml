@@ -220,7 +220,8 @@
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <strong>Event Date:</strong>
-                                <span>@booking.EventDate.ToString("yyyy-MM-dd")</span>
+                                @*<span>@booking.EventDate.ToString("yyyy-MM-dd")</span>*@
+                                <span>@booking.EventDate?.ToString("yyyy-MM-dd")</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <strong>Customer:</strong>
@@ -228,7 +229,12 @@
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <strong>Event:</strong>
-                                <span>@(booking.EventType != null ? booking.EventType.Name : "N/A")</span>
+                                <span>
+                                    @(booking.BookingEventTypes != null && booking.BookingEventTypes.Any()
+                                        ? booking.BookingEventTypes.First().EventType.Name
+                                        : "N/A")
+                                </span>
+
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <strong>Status:</strong>

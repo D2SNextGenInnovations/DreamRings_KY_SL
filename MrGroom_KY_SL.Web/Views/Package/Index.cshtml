@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Total Packages</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count()</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.TotalPackages</h3>
                 </div>
             </div>
         </div>
@@ -43,7 +43,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Active Packages</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count(p => p.IsActive)</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.ActivePackages</h3>
                 </div>
             </div>
         </div>
@@ -57,7 +57,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Inactive Packages</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count(p => !p.IsActive)</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.InactivePackages</h3>
                 </div>
             </div>
         </div>
@@ -71,12 +71,15 @@
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Total Value (Rs)</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Sum(p => p.BasePrice).ToString("N2")</h3>
+                    <h3 class="mb-0 fw-bold">
+                        @ViewBag.TotalPackageValue.ToString("N2")
+                    </h3>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <hr class="soft-gradient-line" />
 

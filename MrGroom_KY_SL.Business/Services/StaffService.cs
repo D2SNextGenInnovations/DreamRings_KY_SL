@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.Entity;
 
 namespace MrGroom_KY_SL.Business.Services
 {
@@ -24,12 +25,14 @@ namespace MrGroom_KY_SL.Business.Services
 
         public Staff GetByIdWithBookings(int id)
         {
-            return _unitOfWork.StaffRepository
-                .Get(
-                    filter: s => s.StaffId == id,
-                    includeProperties: "Bookings,Bookings.Customer,Bookings.EventType,Bookings.Package,Bookings.Payments"
-                )
-                .FirstOrDefault();
+            return _unitOfWork.Context.Staff
+                .Include(s => s.Bookings.Select(b => b.Customer))
+                .Include(s => s.Bookings.Select(b => b.Package))
+                .Include(s => s.Bookings.Select(b => b.Payments))
+                .Include(s => s.Bookings
+                    .Select(b => b.BookingEventTypes
+                        .Select(be => be.EventType)))
+                .FirstOrDefault(s => s.StaffId == id);
         }
 
         public void Create(Staff staff)

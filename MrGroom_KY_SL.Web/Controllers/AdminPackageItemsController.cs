@@ -13,7 +13,6 @@ using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
 
-
 namespace MrGroom_KY_SL.Web.Controllers
 {
     [Authorize(Roles = "Admin")]
@@ -30,40 +29,46 @@ namespace MrGroom_KY_SL.Web.Controllers
                 int pageSize = 5;
                 bool isManageMode = !string.IsNullOrEmpty(manage);
 
-                var items = _packageItemService.GetAll();
+                // IQueryable
+                var query = _packageItemService.GetAll().AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     searchTerm = searchTerm.ToLower();
-                    items = items.Where(i =>
+                    query = query.Where(i =>
                         i.Name.ToLower().Contains(searchTerm) ||
                         (i.Description != null && i.Description.ToLower().Contains(searchTerm))
                     );
                 }
 
-                int totalItems = items.Count();
-                int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+                // Sunnary (before paging)
+                ViewBag.TotalItems = query.Count();
+                ViewBag.ActiveItems = query.Count(i => i.IsActive == true);
+                ViewBag.InactiveItems = query.Count(i => i.IsActive != true);
+                ViewBag.TotalValue = query.Sum(i => (decimal?)i.Price) ?? 0;
 
-                var pageItems = items
+                int totalPages = (int)Math.Ceiling((double)ViewBag.TotalItems / pageSize);
+
+                var pageItems = query
                     .OrderBy(i => i.PackageItemId)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .ToList();
 
-                // Always set ViewBags
+                // Paging ViewBags
                 ViewBag.CurrentPage = page;
                 ViewBag.TotalPages = totalPages;
                 ViewBag.SearchTerm = searchTerm;
                 ViewBag.IsManageMode = isManageMode;
 
-                // AJAX request → partial only
+                // AJAX  partial
                 if (Request.IsAjaxRequest())
                     return PartialView("_PackageItemsTable", pageItems);
 
-                // Normal request → full view
+                // Normal full view
                 return View(pageItems);
             }
-            catch (Exception)
+            catch
             {
                 TempData["ToastrType"] = "error";
                 TempData["ToastrMessage"] = "An error occurred while loading package items.";
@@ -122,10 +127,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                     TempData["ToastrMessage"] = "Package item not found.";
                     return RedirectToAction("Index");
                 }
-
-                var packages = _packageService.GetAll();
-                ViewBag.Packages = new SelectList(packages, "PackageId", "Name", item.PackageItemId);
-
                 return View(item);
             }
             catch (Exception)
@@ -143,9 +144,6 @@ namespace MrGroom_KY_SL.Web.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    var packages = _packageService.GetAll();
-                    ViewBag.Packages = new SelectList(packages, "PackageId", "Name", item.PackageItemId);
-
                     TempData["ToastrType"] = "warning";
                     TempData["ToastrMessage"] = "Please correct the highlighted errors.";
                     return View(item);
@@ -157,10 +155,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                 TempData["ToastrMessage"] = "Package item updated successfully!";
                 return RedirectToAction("Index");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 TempData["ToastrType"] = "error";
-                TempData["ToastrMessage"] = "An error occurred while updating the item.";
+                TempData["ToastrMessage"] = $"An error occurred while updating the item: {ex.Message}";
                 return View(item);
             }
         }
@@ -211,7 +209,7 @@ namespace MrGroom_KY_SL.Web.Controllers
             try
             {
                 // Use eager loading for the related packages
-                var item = _packageItemService.GetById(id, includeProperties: "Packages");
+                var item = _packageItemService.GetByIdWithPackages(id);
 
                 if (item == null)
                 {

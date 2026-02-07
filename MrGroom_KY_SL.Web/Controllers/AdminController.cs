@@ -123,8 +123,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                     {
                         id = b.BookingId,
                         title = $"{(b.Customer?.FirstName ?? "Unknown")} - {string.Join(", ", b.BookingEventTypes.Select(be => be.EventType?.Name ?? "Event"))}",
-                        start = b.EventDate.ToString("yyyy-MM-ddTHH:mm:ss"),
-                        end = b.EventDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        //start = b.EventDate.ToString("yyyy-MM-ddTHH:mm:ss"),
+                        start = b.EventDate.HasValue && b.EventDate.Value > DateTime.MinValue? b.EventDate.Value.ToString("yyyy-MM-ddTHH:mm:ss"): null,
+                        end = b.EventDate.HasValue? b.EventDate.Value.ToString("yyyy-MM-ddTHH:mm:ss"): null,
+                        //end = b.EventDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                         location = b.Location ?? "N/A",
                         status = b.Status ?? "Pending"
                     })

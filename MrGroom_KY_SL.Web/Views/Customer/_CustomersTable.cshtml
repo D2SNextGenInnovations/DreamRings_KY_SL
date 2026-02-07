@@ -90,7 +90,7 @@
                                 <td>@(string.IsNullOrEmpty(c.Email) ? "N/A" : c.Email)</td>
                                 <td>@(string.IsNullOrEmpty(c.Phone) ? "N/A" : c.Phone)</td>
                                 <td>@city</td>
-                                <td class="text-center">@c.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                <td class="text-center">@c.CreatedAt.ToString("dd MMM yyyy")</td>
                                 <td class="text-center">
                                     <a href="@Url.Action("Details", "Customer", new { id = c.CustomerId })" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="View Details">
                                         <i class="fas fa-eye"></i>

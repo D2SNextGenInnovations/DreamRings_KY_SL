@@ -118,19 +118,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">Postal Code</label>
-                    <div class="input-group">
-                        <span class="input-group-text icon-gradient"><i class="bi bi-mailbox"></i></span>
-                        @Html.TextBoxFor(m => m.PostalCode, new { @class = "form-control", placeholder = "Postal Code" })
-                    </div>
-                    @Html.ValidationMessageFor(m => m.PostalCode, "", new { @class = "text-danger small" })
-                </div>
-
-                <div class="col-md-3">
                     <label class="form-label fw-semibold">Country <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text icon-gradient"><i class="bi bi-globe"></i></span>
-                        @Html.TextBoxFor(m => m.Country, new { @class = "form-control", placeholder = "Country" })
+                        @Html.TextBoxFor(m => m.Country, new { @class = "form-control", @Value = "Sri Lanka", @disabled = "disabled" })
                     </div>
                     @Html.ValidationMessageFor(m => m.Country, "", new { @class = "text-danger small" })
                 </div>

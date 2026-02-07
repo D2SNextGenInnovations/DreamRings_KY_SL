@@ -16,6 +16,7 @@ using System.Data.Entity.Validation;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Web;
 using System.Web.Mvc;
 
 namespace MrGroom_KY_SL.Web.Controllers
@@ -32,29 +33,43 @@ namespace MrGroom_KY_SL.Web.Controllers
         private readonly CustomerService _customerService = new CustomerService();
         private readonly PaymentService _paymentService = new PaymentService();
 
-        public ActionResult Index(string searchTerm, int page = 1, string manage = null)
+        public ActionResult Index(string searchTerm, string status = null, int page = 1, string manage = null)
         {
             try
             {
                 int pageSize = 10;
                 bool isManageMode = !string.IsNullOrEmpty(manage);
 
-                var bookings = _bookingService.GetAll();
+                var bookingsQuery = _bookingService.GetAll();
 
+                // Apply search filter
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     searchTerm = searchTerm.ToLower();
-                    bookings = bookings.Where(b =>
+                    bookingsQuery = bookingsQuery.Where(b =>
                         (b.Customer.FirstName + " " + b.Customer.LastName).ToLower().Contains(searchTerm) ||
                         (b.Package != null && b.Package.Name.ToLower().Contains(searchTerm)) ||
                         (b.Status != null && b.Status.ToLower().Contains(searchTerm))
                     );
                 }
 
-                int totalItems = bookings.Count();
+                // Apply status filter
+                if (!string.IsNullOrEmpty(status))
+                {
+                    bookingsQuery = bookingsQuery.Where(b => b.Status == status);
+                }
+
+                // Summary counts
+                ViewBag.TotalBookings = bookingsQuery.Count();
+                ViewBag.ConfirmedCount = bookingsQuery.Count(b => b.Status == "Confirmed");
+                ViewBag.PendingCount = bookingsQuery.Count(b => b.Status == "Pending");
+                ViewBag.CancelledCount = bookingsQuery.Count(b => b.Status == "Cancelled");
+
+                // Pagination
+                int totalItems = bookingsQuery.Count();
                 int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
 
-                var pageItems = bookings
+                var pageItems = bookingsQuery
                     .OrderByDescending(b => b.BookingDate)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
@@ -64,7 +79,9 @@ namespace MrGroom_KY_SL.Web.Controllers
                 ViewBag.TotalPages = totalPages;
                 ViewBag.SearchTerm = searchTerm;
                 ViewBag.IsManageMode = isManageMode;
+                ViewBag.StatusFilter = status;
 
+                // Return partial view for AJAX requests
                 if (Request.IsAjaxRequest())
                     return PartialView("_BookingsTable", pageItems);
 
@@ -73,7 +90,7 @@ namespace MrGroom_KY_SL.Web.Controllers
             catch (Exception ex)
             {
                 TempData["ToastrType"] = "error";
-                TempData["ToastrMessage"] = $"Error loading bookings: {ex.Message}";
+                TempData["ToastrMessage"] = "Error fetching bookings: " + ex.Message;
                 return RedirectToAction("Index", "Home");
             }
         }
@@ -186,51 +203,73 @@ namespace MrGroom_KY_SL.Web.Controllers
         [ValidateAntiForgeryToken]
         public JsonResult CreateAjax(BookingCreateViewModel vm)
         {
-            if (vm.SelectedStaffIds == null || vm.SelectedStaffIds.Length == 0)
-                return Json(new { success = false, message = "Please assign at least one staff member." });
-
             if (!ModelState.IsValid)
                 return Json(new { success = false, message = "Validation failed." });
 
             try
             {
-                // Map VM to Entity
-                var booking = new Booking
+                Booking savedBooking;
+
+                //edit
+                if (vm.BookingId > 0)
                 {
-                    CustomerId = vm.CustomerId,
-                    PackageId = vm.PackageId.Value,
-                    EventDate = vm.EventDate,
-                    Location = vm.Location,
-                    SelectedEventTypeIds = vm.SelectedEventTypeIds
-                };
-
-                var addonDtos = vm.SelectedAddons?
-                    .Where(a => a.Quantity > 0)
-                    .Select(a => new BookingAddonDTO
+                    var booking = new Booking
                     {
-                        PackageItemId = a.PackageItemId,
-                        Quantity = a.Quantity
-                    })
-                    .ToList();
+                        BookingId = vm.BookingId,
+                        CustomerId = vm.CustomerId,
+                        PackageId = vm.PackageId.Value,
+                        EventDate = vm.EventDate,
+                        Location = vm.Location,
+                        SelectedEventTypeIds = vm.SelectedEventTypeIds
+                    };
 
-                // Create booking
-                var savedBooking = _bookingService.Create(
-                    booking,
-                    vm.SelectedStaffIds,
-                    addonDtos
-                );
+                    var addonDtos = vm.SelectedAddons?
+                        .Where(a => a.Quantity > 0)
+                        .Select(a => new BookingAddonDTO
+                        {
+                            PackageItemId = a.PackageItemId,
+                            Quantity = a.Quantity
+                        })
+                        .ToList();
+
+                    _bookingService.Update(booking, vm.SelectedStaffIds, addonDtos);
+                    savedBooking = _bookingService.GetById(vm.BookingId);
+                }
+                else
+                {
+                    // Create new booking
+                    var booking = new Booking
+                    {
+                        CustomerId = vm.CustomerId,
+                        PackageId = vm.PackageId.Value,
+                        EventDate = vm.EventDate,
+                        Location = vm.Location,
+                        SelectedEventTypeIds = vm.SelectedEventTypeIds
+                    };
+
+                    var addonDtos = vm.SelectedAddons?
+                        .Where(a => a.Quantity > 0)
+                        .Select(a => new BookingAddonDTO
+                        {
+                            PackageItemId = a.PackageItemId,
+                            Quantity = a.Quantity
+                        })
+                        .ToList();
+
+                    savedBooking = _bookingService.Create(booking, vm.SelectedStaffIds, addonDtos);
+                }
 
                 // Reload booking with relations
                 var fullBooking = _bookingService.GetAll()
                     .Include(b => b.Payments)
                     .Include(b => b.Package.PackageEventTypes.Select(pet => pet.EventType))
                     .Include(b => b.Package.PackageItemPackages)
-                    .Include(b => b.BookingAddons)
+                    .Include(b => b.BookingAddons.Select(a => a.PackageItem))
                     .Include(b => b.BookingEventTypes.Select(be => be.EventType))
                     .FirstOrDefault(b => b.BookingId == savedBooking.BookingId);
 
                 if (fullBooking == null)
-                    return Json(new { success = false, message = "Booking not found after creation." });
+                    return Json(new { success = false, message = "Booking not found after save." });
 
                 var customer = _customerService.GetById(fullBooking.CustomerId);
                 string customerName = customer != null
@@ -238,19 +277,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                     : "Unknown";
 
                 decimal packageAmount = fullBooking.Package?.BasePrice ?? 0m;
-
-                //var packageEventTypeIds = fullBooking.Package?.PackageEventTypes.Select(p => p.EventTypeId).ToHashSet() ?? new HashSet<int>();
-                //var packageItemIds = fullBooking.Package?.PackageItemPackages.Select(p => p.PackageItemId).ToHashSet() ?? new HashSet<int>();
-
-                decimal eventTypesAmount = fullBooking.BookingEventTypes
-                    .Sum(be => be.EventType.Price);
-
-                decimal addonsTotal = fullBooking.BookingAddons
-                    .Sum(a => a.Quantity * a.UnitPrice);
-
+                decimal eventTypesAmount = fullBooking.BookingEventTypes.Sum(be => be.EventType.Price);
+                decimal addonsTotal = fullBooking.BookingAddons.Sum(a => a.Quantity * a.UnitPrice);
                 decimal fullAmount = packageAmount + eventTypesAmount + addonsTotal;
                 decimal prevPaid = fullBooking.Payments?.Sum(p => p.Amount) ?? 0m;
-
                 decimal balance = fullAmount - prevPaid;
 
                 return Json(new
@@ -259,7 +289,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                     unpaid = balance > 0,
                     isFullyPaid = balance <= 0,
                     bookingId = fullBooking.BookingId,
-                    message = "Booking created successfully!",
+                    message = vm.BookingId > 0
+                        ? "Booking updated successfully!"
+                        : "Booking created successfully!",
+
                     customerName,
                     packageAmount,
                     eventTypesAmount,
@@ -281,13 +314,20 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                     addons = fullBooking.BookingAddons
                         .Where(a => a.Quantity > 0)
-                        .Select(a => new
+                        .GroupBy(a => new
                         {
-                            name = a.PackageItem.Name,
-                            qty = a.Quantity,
-                            price = a.UnitPrice,
-                            total = a.Quantity * a.UnitPrice
+                            a.PackageItemId,
+                            a.PackageItem.Name,
+                            a.UnitPrice
                         })
+                        .Select(g => new
+                        {
+                            name = g.Key.Name,
+                            qty = g.Sum(x => x.Quantity),
+                            price = g.Key.UnitPrice,
+                            total = g.Sum(x => x.Quantity * g.Key.UnitPrice)
+                        })
+                        .ToList()
                 });
             }
             catch (Exception ex)
@@ -295,10 +335,11 @@ namespace MrGroom_KY_SL.Web.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = $"Error creating booking: {ex.Message}"
+                    message = $"Error saving booking: {ex.Message}"
                 });
             }
         }
+
 
         [HttpGet]
         public ActionResult Edit(int id)
@@ -355,17 +396,25 @@ namespace MrGroom_KY_SL.Web.Controllers
                 BookingId = booking.BookingId,
                 CustomerId = booking.CustomerId,
                 PackageId = booking.PackageId,
-                EventDate = booking.EventDate,
+                EventDate = booking.EventDate == DateTime.MinValue ? null : booking.EventDate,
                 Location = booking.Location,
+                Notes = booking.Notes,
                 Status = booking.Status,
                 SelectedStaffIds = booking.StaffMembers.Select(s => s.StaffId).ToArray(),
-                SelectedEventTypeIds = selectedEventTypeIds,
-                SelectedAddons = selectedAddons
+                SelectedEventTypeIds = booking.BookingEventTypes.Select(be => be.EventTypeId).ToArray(),
+                SelectedAddons = booking.BookingAddons
+          .Select(a => new BookingAddonViewModel
+          {
+              PackageItemId = a.PackageItemId,
+              Quantity = a.Quantity
+          })
+          .ToList()
             };
 
-            ViewBag.PackageItemIds = packageItemIds;
             PopulateDropdowns(vm, vm.SelectedStaffIds);
-            return View(vm);
+            PopulatePackageViewBags(vm.PackageId);
+            ModelState.Remove("EventDate");
+            return View("Create", vm); // Reuse the same view
         }
 
         [HttpPost]
@@ -390,9 +439,7 @@ namespace MrGroom_KY_SL.Web.Controllers
                 bool wasReactivated = false;
 
                 // Restore staff for disabled select
-                if (SelectedStaffIds == null || SelectedStaffIds.Length == 0)
-                    SelectedStaffIds = model.SelectedStaffIds ??
-                        existingBooking.StaffMembers.Select(s => s.StaffId).ToArray();
+                SelectedStaffIds = SelectedStaffIds ?? model.SelectedStaffIds;
 
                 if (isCanceled)
                 {
@@ -429,9 +476,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                 }
 
                 // Validations
-                if (SelectedStaffIds == null || !SelectedStaffIds.Any())
-                    ModelState.AddModelError("SelectedStaffIds", "You must assign at least one staff member.");
-
                 if (!ModelState.IsValid)
                 {
                     PopulateDropdowns(model, SelectedStaffIds);
@@ -471,7 +515,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                     .Include(b => b.Package.PackageEventTypes)
                     .Include(b => b.Package.PackageItemPackages)
                     .Include(b => b.BookingEventTypes.Select(x => x.EventType))
-                    .Include(b => b.BookingAddons)
+                    //.Include(b => b.BookingAddons)
+                    .Include(b => b.BookingAddons.Select(a => a.PackageItem))
                     .FirstOrDefault(b => b.BookingId == existingBooking.BookingId);
 
                 if (fullBooking == null)
@@ -523,7 +568,6 @@ namespace MrGroom_KY_SL.Web.Controllers
                     eventTypesAmount += chargeableCount * price;
                 }
 
-                //Addons (Package Items)
                 var packageItemQtyMap = fullBooking.Package?.PackageItemPackages
                     .ToDictionary(x => x.PackageItemId, x => x.Qty)
                     ?? new Dictionary<int, int>();
@@ -545,11 +589,12 @@ namespace MrGroom_KY_SL.Web.Controllers
                 }
 
                 // Total
-                decimal fullAmount = packageAmount + eventTypesAmount + addonsAmount;
+                decimal fullAmount = fullBooking.GrandTotal;
                 decimal totalPaid = fullBooking.Payments?.Sum(p => p.Amount) ?? 0m;
-                decimal balance = fullAmount - totalPaid;
+                decimal balance = fullBooking.RemainingAmount;
 
-                fullBooking.Status = balance <= 0 ? "Confirmed" : "Pending";
+                fullBooking.Status = fullBooking.RemainingAmount <= 0 ? "Confirmed" : "Pending";
+                //fullBooking.Status = balance <= 0 ? "Confirmed" : "Pending";
 
                 var eventTypeSummary = fullBooking.BookingEventTypes
                  .GroupBy(x => x.EventType)
@@ -563,15 +608,34 @@ namespace MrGroom_KY_SL.Web.Controllers
                  .ToList();
 
                 var addonSummary = fullBooking.BookingAddons
-                    .Where(a => a.Quantity > 0)
-                    .Select(a => new
-                    {
-                        name = a.PackageItem.Name,
-                        qty = a.Quantity,
-                        price = a.UnitPrice,
-                        total = a.Quantity * a.UnitPrice
-                    })
-                    .ToList();
+                        .Select(a =>
+                        {
+                            int packageQty = packageItemQtyMap.ContainsKey(a.PackageItemId)
+                                ? packageItemQtyMap[a.PackageItemId]
+                                : 0;
+
+                            int chargeableQty = Math.Max(0, a.Quantity - packageQty);
+
+                            return new
+                            {
+                                a.PackageItemId,
+                                Name = a.PackageItem.Name,
+                                UnitPrice = a.UnitPrice,
+                                ChargeableQty = chargeableQty
+                            };
+                        })
+                        .Where(x => x.ChargeableQty > 0)
+                        .GroupBy(x => new { x.PackageItemId, x.Name, x.UnitPrice })
+                        .Select(g => new
+                        {
+                            name = g.Key.Name,
+                            qty = g.Sum(x => x.ChargeableQty),
+                            price = g.Key.UnitPrice,
+                            total = g.Sum(x => x.ChargeableQty * x.UnitPrice)
+                        })
+                        .ToList();
+
+
 
                 // AJAX response
                 if (Request.IsAjaxRequest())
@@ -592,10 +656,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                     return Json(new
                     {
                         success = true,
-                        unpaid = balance > 0,
-                        isFullyPaid = balance <= 0,
+                        unpaid = fullBooking.RemainingAmount > 0,
+                        isFullyPaid = fullBooking.RemainingAmount <= 0,
                         bookingId = fullBooking.BookingId,
-                        customerName = fullBooking.Customer != null? $"{fullBooking.Customer.FirstName} {fullBooking.Customer.LastName}": "",
+                        customerName = fullBooking.Customer != null ? $"{fullBooking.Customer.FirstName} {fullBooking.Customer.LastName}" : "",
                         packageAmount,
                         eventTypesAmount,
                         addonsAmount,
@@ -603,8 +667,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                         fullAmount,
                         prevPaid = totalPaid,
                         balance,
-                        eventTypes = eventTypeSummary, 
-                        addons = addonSummary,     
+                        eventTypes = eventTypeSummary,
+                        addons = addonSummary,
                         paymentMethod = lastPayment?.PaymentMethod ?? "",
                         paymentType = lastPayment?.PaymentType ?? "",
                         remarks = lastPayment?.Remarks ?? ""
@@ -725,6 +789,17 @@ namespace MrGroom_KY_SL.Web.Controllers
                 if (booking == null)
                     return Json(new { success = false, message = "Booking not found." });
 
+                decimal remaining = booking.RemainingAmount;
+
+                if (payment.Amount > remaining)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Payment amount exceeds remaining balance."
+                    });
+                }
+
                 if (booking.Status == "Canceled")
                 {
                     return Json(new
@@ -748,7 +823,7 @@ namespace MrGroom_KY_SL.Web.Controllers
                 var updatedBooking = _bookingService.GetAll().Include(b => b.Payments).FirstOrDefault(b => b.BookingId == payment.BookingId);
 
                 decimal totalPaid = updatedBooking.Payments.Sum(p => p.Amount);
-                string status = totalPaid >= 15000 ? "Confirmed" : "Pending";
+                string status = totalPaid >= 10000 ? "Confirmed" : "Pending";
 
                 _bookingService.UpdateStatus(updatedBooking.BookingId, status);
 
@@ -887,7 +962,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                         ws.Cells[row, 8].Value = b.Location;
                         ws.Cells[row, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
-                        ws.Cells[row, 9].Value = b.EventDate.ToString("yyyy-MM-dd");
+                        ws.Cells[row, 9].Value = b.EventDate.HasValue && b.EventDate.Value > DateTime.MinValue ? b.EventDate.Value.ToString("yyyy-MM-dd") : "";
+
                         ws.Cells[row, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
 
                         ws.Cells[row, 10].Value = b.BookingDate.ToString("yyyy-MM-dd");
@@ -984,7 +1060,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                         table.AddCell(new Phrase(string.Join(", ", b.BookingEventTypes?.Select(be => be.EventType?.Name).Where(n => !string.IsNullOrWhiteSpace(n)) ?? Enumerable.Empty<string>()), bodyFont));
 
                         table.AddCell(new Phrase(b.Location, bodyFont));
-                        table.AddCell(new Phrase(b.EventDate.ToString("dd/MM/yyyy"), bodyFont));
+                        table.AddCell(new Phrase(b.EventDate.HasValue && b.EventDate.Value > DateTime.MinValue ? b.EventDate.Value.ToString("dd/MM/yyyy") : "", bodyFont));
+
                         table.AddCell(new Phrase(b.BookingDate.ToString("dd/MM/yyyy"), bodyFont));
                         table.AddCell(new Phrase(b.Status, bodyFont));
                         table.AddCell(new Phrase(b.Notes, bodyFont));
@@ -1049,6 +1126,74 @@ namespace MrGroom_KY_SL.Web.Controllers
                     quantity = pip.Qty
                 })
             }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult SendWhatsAppClickToChat(int id)
+        {
+            var booking = GetFullBooking(id);
+            if (booking == null || booking.Customer == null)
+                return HttpNotFound();
+
+            // Format Sri Lanka phone number → 94
+            string phone = booking.Customer.Phone ?? string.Empty;
+            phone = phone.Replace(" ", "").Replace("-", "").Replace("+", "");
+
+            if (phone.StartsWith("0"))
+                phone = "94" + phone.Substring(1);
+
+            // Safety check
+            if (phone.Length < 11)
+                return new HttpStatusCodeResult(400, "Invalid phone number");
+
+            // Calculate amounts
+            decimal packageAmount = booking.Package?.BasePrice ?? 0m;
+            decimal eventTypesAmount = booking.BookingEventTypes?.Sum(e => e.EventType.Price) ?? 0m;
+            decimal addonsAmount = booking.BookingAddons?.Sum(a => a.Quantity * a.UnitPrice) ?? 0m;
+
+            decimal total = packageAmount + eventTypesAmount + addonsAmount;
+            decimal paid = booking.Payments?.Sum(p => p.Amount) ?? 0m;
+            decimal balance = total - paid;
+
+            // message
+            string message =
+                "Booking Confirmed\n\n" +
+                "Customer: " + booking.Customer.FirstName + " " + booking.Customer.LastName + "\n" +
+                //"Event Date: " + booking.EventDate.ToString("yyyy-MM-dd") + "\n" +
+                "Event Date: " + (booking.EventDate.HasValue && booking.EventDate.Value > DateTime.MinValue ? booking.EventDate.Value.ToString("yyyy-MM-dd") : "N/A") + "\n" +
+
+                "Location: " + booking.Location + "\n\n" +
+
+                "Package: " + booking.Package?.Name + "\n" +
+                "Package Price: Rs " + packageAmount.ToString("N2") + "\n\n" +
+
+                "Event Types:\n" +
+                (booking.BookingEventTypes != null && booking.BookingEventTypes.Any()
+                    ? string.Join("\n", booking.BookingEventTypes
+                        .GroupBy(e => e.EventType.Name)
+                        .Select(g => "- " + g.Key + " x" + g.Count()))
+                    : "None") +
+                "\n\n" +
+
+                "Addons:\n" +
+                (booking.BookingAddons != null && booking.BookingAddons.Any()
+                    ? string.Join("\n", booking.BookingAddons.Select(a =>
+                        "- " + a.PackageItem.Name + " x" + a.Quantity +
+                        " (Rs " + a.UnitPrice.ToString("N2") + ")"))
+                    : "None") +
+                "\n\n" +
+
+                "Payment Summary\n" +
+                "Total: Rs " + total.ToString("N2") + "\n" +
+                "Paid: Rs " + paid.ToString("N2") + "\n" +
+                "Balance: Rs " + balance.ToString("N2") + "\n\n" +
+                "Dream Rings Photography";
+
+            // Encode + Redirect 
+            string encodedMessage = HttpUtility.UrlEncode(message);
+            string url = $"https://wa.me/{phone}?text={encodedMessage}";
+
+            return Redirect(url);
         }
     }
 }

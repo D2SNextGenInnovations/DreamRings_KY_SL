@@ -16,16 +16,16 @@
         @using (Html.BeginForm())
         {
             @Html.AntiForgeryToken()
-
+            @Html.HiddenFor(m => m.PackageItemId)
             <!-- Package -->
-            <div class="form-group mb-4">
+            @*<div class="form-group mb-4">
                 <label class="form-label fw-semibold">Package</label>
                 <div class="input-group">
                     <span class="input-group-text icon-gradient"><i class="bi bi-box-seam"></i></span>
                     @Html.DropDownListFor(m => m.PackageItemId, (SelectList)ViewBag.Packages, "Select Package", new { @class = "form-control" })
                 </div>
                 @Html.ValidationMessageFor(m => m.PackageItemId, "", new { @class = "text-danger small" })
-            </div>
+            </div>*@
 
             <!-- Item Name -->
             <div class="form-group mb-4">

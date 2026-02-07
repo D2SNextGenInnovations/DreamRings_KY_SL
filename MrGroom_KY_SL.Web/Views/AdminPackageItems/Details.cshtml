@@ -165,25 +165,31 @@
 
     <!-- Linked Packages -->
     <h5 class="section-title"><i class="bi bi-boxes me-2"></i> Related Packages</h5>
-    @if (Model.Packages != null && Model.Packages.Any())
+    @if (Model.PackageItemPackages != null && Model.PackageItemPackages.Any())
     {
         <div class="row g-4">
-            @foreach (var pkg in Model.Packages)
+            @foreach (var link in Model.PackageItemPackages)
             {
+                var pkg = link.Package;
+
                 <div class="col-md-6">
                     <div class="card-modern p-4 h-100">
                         <h6 class="fw-bold text-secondary mb-2">
                             <i class="bi bi-archive-fill me-1"></i> @pkg.Name
                         </h6>
+
                         @if (!string.IsNullOrEmpty(pkg.Description))
                         {
                             <p class="text-muted">@pkg.Description</p>
                         }
-                        <p><strong>Base Price:</strong> @pkg.BasePrice.ToString("C")</p>
-                        @if (pkg.DurationHours != null)
-                        {
-                            <p><strong>Duration:</strong> @pkg.DurationHours hr(s)</p>
-                        }
+
+                        <p><strong>Base Price:</strong> Rs @pkg.BasePrice.ToString("N2")</p>
+
+                        <p>
+                            <strong>Quantity Used:</strong>
+                            <span class="badge bg-info">@link.Qty</span>
+                        </p>
+
                         <p>
                             <strong>Status:</strong>
                             @if (pkg.IsActive)
@@ -203,9 +209,11 @@
     else
     {
         <div class="no-data mt-4">
-            <i class="bi bi-info-circle me-2"></i> This package item is not linked to any packages.
+            <i class="bi bi-info-circle me-2"></i>
+            This package item is not linked to any packages.
         </div>
     }
+
 
     <div class="text-center mt-5">
         <a href="@Url.Action("Index", "AdminPackageItems")" class="btn btn-gradient rounded-pill px-5 py-2">

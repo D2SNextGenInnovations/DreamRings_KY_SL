@@ -21,59 +21,69 @@
 
 <!-- SUMMARY CARDS -->
 <div class="row g-3 mb-4">
+
+    <!-- Total Bookings -->
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card total-filter">
             <div class="card-body d-flex align-items-center">
                 <div class="icon-circle bg-primary text-white me-3">
                     <i class="fas fa-calendar-day"></i>
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Total Bookings</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count()</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.TotalBookings</h3>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Confirmed -->
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card status-filter" data-status="Confirmed">
             <div class="card-body d-flex align-items-center">
                 <div class="icon-circle bg-success text-white me-3">
                     <i class="fas fa-check-circle"></i>
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Confirmed</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count(b => b.Status == "Confirmed")</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.ConfirmedCount</h3>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Pending -->
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card status-filter" data-status="Pending">
             <div class="card-body d-flex align-items-center">
                 <div class="icon-circle bg-warning text-dark me-3">
                     <i class="fas fa-hourglass-half"></i>
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Pending</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count(b => b.Status == "Pending")</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.PendingCount</h3>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Cancelled -->
     <div class="col-md-3 col-sm-6">
-        <div class="card stat-card border-0 shadow-sm h-100">
+        <div class="card stat-card status-filter" data-status="Cancelled">
             <div class="card-body d-flex align-items-center">
                 <div class="icon-circle bg-danger text-white me-3">
                     <i class="fas fa-times-circle"></i>
                 </div>
                 <div>
                     <h6 class="text-muted mb-1">Cancelled</h6>
-                    <h3 class="mb-0 fw-bold">@Model.Count(b => b.Status == "Cancelled")</h3>
+                    <h3 class="mb-0 fw-bold">@ViewBag.CancelledCount</h3>
                 </div>
             </div>
         </div>
     </div>
+
 </div>
+
 
 <hr class="soft-gradient-line" />
 
@@ -101,7 +111,9 @@
 </div>
 
 @section Scripts {
+
     <script>
+        // Handle AJAX pagination
         $(document).on("click", ".ajax-page", function (e) {
             e.preventDefault();
             var url = $(this).attr("href");
@@ -129,4 +141,66 @@
             });
         });
     </script>
+
+    <script>
+        // Handle status filter clicks
+        $(document).ready(function () {
+            $(".status-filter").on("click", function () {
+                var status = $(this).data("status");
+                var searchTerm = $("input[name='searchTerm']").val() || "";
+
+                $.ajax({
+                    url: '@Url.Action("Index", "AdminBookings")',
+                    type: "GET",
+                    data: { status: status, searchTerm: searchTerm },
+                    beforeSend: function () {
+                        $("#bookingsContainer").css("opacity", "0.6");
+                    },
+                    success: function (data) {
+                        if ($(data).find("#bookingsContainer").length) {
+                            $("#bookingsContainer").html($(data).find("#bookingsContainer").html());
+                        } else {
+                            $("#bookingsContainer").html(data);
+                        }
+                        $("#bookingsContainer").css("opacity", "1");
+                    },
+                    error: function () {
+                        alert("Failed to filter bookings.");
+                        $("#bookingsContainer").css("opacity", "1");
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script>
+        // Handle total bookings card click (reset filters)
+        $(document).on("click", ".total-filter", function () {
+            // Clear search input
+            $("input[name='searchTerm']").val("");
+
+            $.ajax({
+                url: '@Url.Action("Index", "AdminBookings")',
+                type: "GET",
+                data: { status: null, searchTerm: null, page: 1 },
+                beforeSend: function () {
+                    $("#bookingsContainer").css("opacity", "0.6");
+                },
+                success: function (data) {
+                    if ($(data).find("#bookingsContainer").length) {
+                        $("#bookingsContainer").html($(data).find("#bookingsContainer").html());
+                    } else {
+                        $("#bookingsContainer").html(data);
+                    }
+                    $("#bookingsContainer").css("opacity", "1");
+                },
+                error: function () {
+                    alert("Failed to reload bookings.");
+                    $("#bookingsContainer").css("opacity", "1");
+                }
+            });
+        });
+    </script>
+
 }
+

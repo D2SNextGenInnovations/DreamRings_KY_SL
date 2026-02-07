@@ -10,7 +10,8 @@ namespace MrGroom_KY_SL.Web.Models
         public int BookingId { get; set; }
         public int CustomerId { get; set; }
         public int? PackageId { get; set; }
-        public DateTime EventDate { get; set; }
+        public DateTime? EventDate { get; set; }
+
         public string Location { get; set; }
 
         public int[] SelectedStaffIds { get; set; }

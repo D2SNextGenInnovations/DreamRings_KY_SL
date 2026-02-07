@@ -69,7 +69,17 @@ namespace MrGroom_KY_SL.Models
                 // ---------------- EVENT DETAILS ----------------
                 PdfPTable details = new PdfPTable(2);
                 details.WidthPercentage = 100;
-                details.AddCell(Cell("Event Date : " + b.EventDate.ToString("yyyy-MM-dd"), normal));
+                //details.AddCell(Cell("Event Date : " + b.EventDate.ToString("yyyy-MM-dd"), normal));
+                details.AddCell(
+                    Cell(
+                        "Event Date : " +
+                        (b.EventDate.HasValue && b.EventDate.Value > DateTime.MinValue
+                            ? b.EventDate.Value.ToString("yyyy-MM-dd")
+                            : "N/A"),
+                        normal
+                    )
+                );
+
                 details.AddCell(Cell("Venue : " + b.Location, normal));
                 doc.Add(details);
                 doc.Add(new Paragraph("\n"));

@@ -35,12 +35,28 @@ namespace MrGroom_KY_SL.Business.Services
             _unitOfWork.Save();
         }
 
-        public void Update(PackageItem item)
+        public void Update(PackageItem updatedItem)
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
+            if (updatedItem == null) throw new ArgumentNullException(nameof(updatedItem));
 
-            _unitOfWork.PackageItemRepository.Update(item);
+            var existingItem = _unitOfWork.PackageItemRepository.GetById(updatedItem.PackageItemId);
+            if (existingItem == null)
+                throw new KeyNotFoundException($"PackageItem with ID {updatedItem.PackageItemId} not found.");
+
+            existingItem.Name = updatedItem.Name;
+            existingItem.Description = updatedItem.Description;
+            existingItem.Price = updatedItem.Price;
+            existingItem.IsActive = updatedItem.IsActive;
+
             _unitOfWork.Save();
+        }
+
+        public PackageItem GetByIdWithPackages(int id)
+        {
+            return _unitOfWork.PackageItemRepository
+                .GetAll(includeProperties:
+                    "PackageItemPackages.Package,PackageItemPackages.Package.PackagePhotos")
+                .FirstOrDefault(i => i.PackageItemId == id);
         }
 
         public void Delete(int id)

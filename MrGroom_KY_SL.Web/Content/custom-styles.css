@@ -361,3 +361,7 @@
         opacity: 0.5;
         pointer-events: none;
     }
+
+.stat-card {
+    cursor: pointer;
+}

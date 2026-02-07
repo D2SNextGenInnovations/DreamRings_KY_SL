@@ -51,23 +51,23 @@ namespace MrGroom_KY_SL.Business.Services
             if (booking == null)
                 throw new ArgumentNullException(nameof(booking));
 
-            if (staffIds == null || staffIds.Length == 0)
-                throw new ArgumentException("At least one staff member must be assigned.", nameof(staffIds));
-
             // Save booking
             _unitOfWork.BookingRepository.Insert(booking);
             _unitOfWork.Save();
 
-            // Assign staff
-            var staffToAssign = _unitOfWork.StaffRepository
-                .GetAll()
-                .Where(s => staffIds.Contains(s.StaffId))
-                .ToList();
+            // Assign staff (OPTIONAL)
+            if (staffIds != null && staffIds.Any())
+            {
+                var staffToAssign = _unitOfWork.StaffRepository
+                    .GetAll()
+                    .Where(s => staffIds.Contains(s.StaffId))
+                    .ToList();
 
-            foreach (var staff in staffToAssign)
-                booking.StaffMembers.Add(staff);
+                foreach (var staff in staffToAssign)
+                    booking.StaffMembers.Add(staff);
 
-            _unitOfWork.Save();
+                _unitOfWork.Save();
+            }
 
             // Load package data safely
             var packageEventTypeIds = new HashSet<int>();
@@ -142,7 +142,6 @@ namespace MrGroom_KY_SL.Business.Services
                             : item.Price
                     });
                 }
-
                 _unitOfWork.Save();
             }
             return booking;
@@ -152,9 +151,6 @@ namespace MrGroom_KY_SL.Business.Services
         {
             if (booking == null)
                 throw new ArgumentNullException(nameof(booking), "Booking object cannot be null.");
-
-            if (staffIds == null || staffIds.Length == 0)
-                throw new ArgumentException("You must assign at least one staff member.", nameof(staffIds));
 
             // Load booking with relations
             var existing = _unitOfWork.BookingRepository
@@ -176,18 +172,18 @@ namespace MrGroom_KY_SL.Business.Services
             if (!string.IsNullOrWhiteSpace(booking.Status))
                 existing.Status = booking.Status;
 
-            // Update Staff (Many-to-Many)
-            var staffToAssign = _unitOfWork.StaffRepository
-                .GetAll()
-                .Where(s => staffIds.Contains(s.StaffId))
-                .ToList();
-
-            if (!staffToAssign.Any())
-                throw new InvalidOperationException("No matching staff members found.");
-
             existing.StaffMembers.Clear();
-            foreach (var staff in staffToAssign)
-                existing.StaffMembers.Add(staff);
+
+            if (staffIds != null && staffIds.Any())
+            {
+                var staffToAssign = _unitOfWork.StaffRepository
+                    .GetAll()
+                    .Where(s => staffIds.Contains(s.StaffId))
+                    .ToList();
+
+                foreach (var staff in staffToAssign)
+                    existing.StaffMembers.Add(staff);
+            }
 
             // Update Event Types (Many-to-Many)
             var selectedEventTypeIds = booking.SelectedEventTypeIds ?? Array.Empty<int>();
