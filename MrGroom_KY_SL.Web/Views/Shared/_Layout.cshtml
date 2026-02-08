@@ -419,23 +419,95 @@
         <ul>
             @if (u != null && u.Role == "Admin")
             {
-                <li><a href="/Admin/AdminDashboard" class="nav-link" data-bs-toggle="tooltip" title="Dashboard"><i class="fa fa-chart-line"></i><span>Dashboard</span></a></li>
-                <li><a href="/Admin" class="nav-link" data-bs-toggle="tooltip" title="Users"><i class="fa fa-users"></i><span>Users</span></a></li>
-                <li><a href="/AdminBookings" class="nav-link" data-bs-toggle="tooltip" title="Admin Bookings"><i class="fa fa-calendar-check"></i><span>Admin Bookings</span></a></li>
-                <li><a href="/Customer" class="nav-link" data-bs-toggle="tooltip" title="Register Customer"><i class="fa fa-credit-card"></i><span>Register Customer</span></a></li>
-                <li><a href="/Staff" class="nav-link" data-bs-toggle="tooltip" title="Manage Staff"><i class="fa fa-user-tie"></i><span>Manage Staff</span></a></li>
-                <li><a href="/Package" class="nav-link" data-bs-toggle="tooltip" title="Packages"><i class="fa fa-box"></i><span>Packages</span></a></li>
-                <li><a href="/AdminPackageEventTypes" class="nav-link" data-bs-toggle="tooltip" title="Event Types"><i class="fa fa-calendar-day"></i><span>Event Types</span></a></li>
-                <li><a href="/AdminPackageItems" class="nav-link" data-bs-toggle="tooltip" title="Package Items"><i class="fa fa-list-check"></i><span>Package Items</span></a></li>
-                <li><a href="/AdminPackagePhotos" class="nav-link" data-bs-toggle="tooltip" title="Package Photos"><i class="fa fa-images"></i><span>Package Photos</span></a></li>
+                 <li><a href="/Admin/AdminDashboard" class="nav-link" data-bs-toggle="tooltip" title="Dashboard"><i class="fa fa-chart-line"></i><span>Dashboard</span></a></li>
+                <!-- 1. Bookings -->
+                <li>
+                    <a href="/AdminBookings" class="nav-link" data-bs-toggle="tooltip" title="Bookings">
+                        <i class="fa fa-calendar-check"></i>
+                        <span>Bookings</span>
+                    </a>
+                </li>
+
+                <!-- 2. Payments -->
+                <li>
+                    <a href="/AdminPayments/Payments" class="nav-link" data-bs-toggle="tooltip" title="Payments">
+                        <i class="fa fa-credit-card"></i>
+                        <span>Payments</span>
+                    </a>
+                </li>
+
+                <!-- 3. Register Customer -->
+                <li>
+                    <a href="/Customer" class="nav-link" data-bs-toggle="tooltip" title="Register Customer">
+                        <i class="fa fa-user-plus"></i>
+                        <span>Register Customer</span>
+                    </a>
+                </li>
+
+                <!-- 4. Create Package -->
+                <li>
+                    <a href="/AdminPackageEventTypes" class="nav-link" data-bs-toggle="tooltip" title="Event Types">
+                        <i class="fa fa-calendar-day"></i>
+                        <span>Event Types</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/AdminPackageItems" class="nav-link" data-bs-toggle="tooltip" title="Package Items">
+                        <i class="fa fa-list-check"></i>
+                        <span>Package Items</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/AdminPackagePhotos" class="nav-link" data-bs-toggle="tooltip" title="Package Photos">
+                        <i class="fa fa-images"></i>
+                        <span>Package Photos</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/Package" class="nav-link" data-bs-toggle="tooltip" title="Package">
+                        <i class="fa fa-box"></i>
+                        <span>Package</span>
+                    </a>
+                </li>
+
+                <!-- 5. Manage Staff -->
+                <li>
+                    <a href="/Staff" class="nav-link" data-bs-toggle="tooltip" title="Manage Staff">
+                        <i class="fa fa-user-tie"></i>
+                        <span>Manage Staff</span>
+                    </a>
+                </li>
+
+                <!-- 6. Users -->
+                <li>
+                    <a href="/Admin" class="nav-link" data-bs-toggle="tooltip" title="Users">
+                        <i class="fa fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </li>
             }
             else
             {
-                <li><a href="/" class="nav-link" data-bs-toggle="tooltip" title="Home"><i class="fa fa-home"></i><span>Home</span></a></li>
-                <li><a href="/Bookings" class="nav-link" data-bs-toggle="tooltip" title="Bookings"><i class="fa fa-calendar"></i><span>Bookings</span></a></li>
+                <li>
+                    <a href="/" class="nav-link" data-bs-toggle="tooltip" title="Home">
+                        <i class="fa fa-home"></i>
+                        <span>Home</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="/Bookings" class="nav-link" data-bs-toggle="tooltip" title="Bookings">
+                        <i class="fa fa-calendar"></i>
+                        <span>Bookings</span>
+                    </a>
+                </li>
             }
         </ul>
     </nav>
+
 
     <!-- MAIN CONTENT -->
     <main class="main-content @(sidebarCollapsed ? "expanded" : "")" id="mainContent">

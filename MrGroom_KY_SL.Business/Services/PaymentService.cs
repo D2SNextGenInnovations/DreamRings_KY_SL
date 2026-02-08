@@ -2,6 +2,7 @@
 using MrGroom_KY_SL.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,6 +20,11 @@ namespace MrGroom_KY_SL.Business.Services
                 .Where(p => p.BookingId == bookingId)
                 .OrderByDescending(p => p.PaymentDate)
                 .ToList();
+        }
+
+        public IQueryable<Payment> GetAllPayments()
+        {
+            return _unitOfWork.PaymentRepository.GetAll();
         }
 
         public Payment GetById(int id)

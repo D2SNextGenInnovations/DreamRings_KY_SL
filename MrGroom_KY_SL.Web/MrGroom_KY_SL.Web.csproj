@@ -189,6 +189,7 @@
     <Compile Include="Controllers\AdminPackageEventTypesController.cs" />
     <Compile Include="Controllers\AdminPackageItemsController.cs" />
     <Compile Include="Controllers\AdminPackagePhotosController.cs" />
+    <Compile Include="Controllers\AdminPaymentsController.cs" />
     <Compile Include="Controllers\BookingsController.cs" />
     <Compile Include="Controllers\CompanyInfoController.cs" />
     <Compile Include="Controllers\CustomerController.cs" />
@@ -205,10 +206,13 @@
     <Compile Include="Models\AdminDashboardViewModel.cs" />
     <Compile Include="Models\BookingAddonViewModel.cs" />
     <Compile Include="Models\BookingCreateViewModel.cs" />
+    <Compile Include="Models\BookingPaymentVM.cs" />
+    <Compile Include="Models\CustomerPaymentTotalVM.cs" />
     <Compile Include="Models\CustomerViewModel.cs" />
     <Compile Include="Models\EmailSenderViewModel.cs" />
     <Compile Include="Models\LoginViewModel.cs" />
     <Compile Include="Models\PackageViewModel.cs" />
+    <Compile Include="Models\PaymentViewModel.cs" />
     <Compile Include="Models\RegisterViewModel.cs" />
     <Compile Include="Models\SendPackageEmailViewModel.cs" />
     <Compile Include="Models\SessionUser.cs" />
@@ -316,6 +320,7 @@
     <Content Include="Views\CompanyInfo\Edit.cshtml" />
     <Content Include="Views\CompanyInfo\Delete.cshtml" />
     <Content Include="Views\CompanyInfo\Index.cshtml" />
+    <Content Include="Views\AdminPayments\Payments.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

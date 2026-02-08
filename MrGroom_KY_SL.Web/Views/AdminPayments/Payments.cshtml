@@ -1,0 +1,502 @@
+﻿@using MrGroom_KY_SL.Web.Models
+@model IEnumerable<MrGroom_KY_SL.Models.Payment>
+
+@{
+    ViewBag.Title = "Payments";
+}
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-semibold mb-1">
+            <i class="bi bi-wallet2 me-2 text-primary"></i>Payments
+        </h3>
+        <small class="text-muted">All customer transactions in one place</small>
+    </div>
+</div>
+
+<!-- SUMMARY BAR -->
+@if (ViewBag.CustomerTotals != null)
+{
+    var totals = ViewBag.CustomerTotals as IEnumerable<CustomerPaymentTotalVM>;
+    if (totals != null && totals.Any())
+    {
+        <div class="row g-2 mb-4">
+            @foreach (var c in totals)
+            {
+                var popoverContent = "<table class=\"table table-sm table-bordered table-auto mb-0\">" +
+                                     "<thead class=\"table-light\" style=\"background-color:#f0f4ff; color:#111; border-bottom:2px solid #007bff;\">" +
+                                     "<tr>" +
+                                     "<th>Date</th>" +
+                                     "<th>Amount</th>" +
+                                     "<th>Method</th>" +
+                                     "<th>Type</th>" +
+                                     "<th>Status</th>" +
+                                     "</tr>" +
+                                     "</thead>" +
+                                     "<tbody>";
+
+                foreach (var p in c.Payments)
+                {
+                    popoverContent += "<tr>" +
+                                      $"<td>{p.PaymentDate:yyyy-MM-dd}</td>" +
+                                      $"<td>Rs {p.Amount:N2}</td>" +
+                                      $"<td>{p.Method}</td>" +
+                                      $"<td>{p.Type}</td>" +
+                                      $"<td style=\"color:{(p.Status == "Paid" ? "green" : "red")}\">{p.Status}</td>" +
+                                      "</tr>";
+                }
+
+                popoverContent += "</tbody></table>";
+
+
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                    <div class="card summary-card-sm border rounded-3 h-100 p-3 position-relative summary-popover"
+                         data-bs-toggle="popover"
+                         data-bs-trigger="hover focus"
+                         data-bs-placement="bottom"
+                         data-bs-html="true"
+                         data-bs-content='@Html.Raw(popoverContent)'>
+
+                        <!-- Payment count badge -->
+                        <span class="position-absolute top-0 end-0 bg-primary text-white rounded-pill fs-7 fw-semibold d-flex justify-content-center align-items-center"
+                              style="width: 24px; height: 24px; transform: translate(25%, -25%); font-size: 0.7rem;">
+                            @c.PaymentCount
+                        </span>
+
+                        <div class="card-body p-0 mt-2">
+                            <div class="text-uppercase text-muted fw-semibold mb-1" style="font-size: 0.75rem;">
+                                @c.CustomerName
+                            </div>
+                            <div class="fw-bold text-dark" style="font-size: 1.1rem;">
+                                Rs @c.TotalAmount.ToString("N2")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+<!-- FILTERS -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 filter-card">
+    <div class="card-body py-3">
+        <form method="get" class="row g-3 align-items-center">
+
+            <!-- Customer Search -->
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group input-group-modern">
+                    <span class="input-group-text">
+                        <i class="bi bi-person"></i>
+                    </span>
+                    <input type="text"
+                           name="customerName"
+                           class="form-control"
+                           placeholder="Customer name"
+                           value="@ViewBag.CustomerNameFilter" />
+                </div>
+            </div>
+
+            <!-- Booking ID -->
+            <div class="col-lg-3 col-md-4">
+                <div class="input-group input-group-modern">
+                    <span class="input-group-text">
+                        <i class="bi bi-hash"></i>
+                    </span>
+                    <input type="number"
+                           name="bookingId"
+                           class="form-control"
+                           placeholder="Booking ID"
+                           value="@ViewBag.BookingIdFilter" />
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="col-lg-3 col-md-6 d-flex gap-2">
+                <button type="submit" class="btn btn-dark btn-modern flex-fill">
+                    <i class="bi bi-search me-1"></i> Search
+                </button>
+
+                <a href="@Url.Action("Payments")"
+                   class="btn btn-light btn-modern">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+
+<!-- PAYMENTS LIST -->
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-wallet2 fs-1 mb-2 d-block"></i>
+                No payments yet
+            </div>
+        }
+        else
+        {
+            foreach (var p in Model)
+            {
+                <div class="d-flex align-items-center px-4 py-3 border-bottom payment-row">
+
+                    <!-- STATUS DOT -->
+                    <div class="me-3">
+                        <span class="payment-dot
+                            @(p.PaymentType == "Full" ? "bg-success" :
+                              p.PaymentType == "Half" ? "bg-info" :
+                              "bg-warning")">
+                        </span>
+                    </div>
+
+                    <!-- CONTENT -->
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">
+                                    @(p.Booking.Customer.FirstName + " " + (p.Booking.Customer.LastName ?? ""))
+                                </div>
+                                <small class="text-muted">
+                                    Booking #@p.BookingId · @p.PaymentMethod
+                                </small>
+                            </div>
+
+                            <div class="text-end">
+                                <div class="fw-bold">@p.Amount.ToString("C")</div>
+                                <small class="text-muted">
+                                    @p.PaymentDate.ToString("dd MMM yyyy")
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- META -->
+                        <div class="d-flex justify-content-between mt-2 small">
+                            <div>
+                                Total: @p.Booking.GrandTotal.ToString("C")
+                                · Paid:
+                                <span class="text-success">@p.Booking.TotalPaid.ToString("C")</span>
+                                · Balance:
+                                <span class="@(p.Booking.RemainingAmount > 0 ? "text-danger" : "text-success")">
+                                    @p.Booking.RemainingAmount.ToString("C")
+                                </span>
+                            </div>
+
+                            <div>
+                                <span class="badge rounded-pill bg-light text-dark">
+                                    @p.PaymentType
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- PAGINATION -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination pagination-lg mb-0">
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                        <a class="page-link rounded-circle"
+                           href="@Url.Action("Payments", new {
+                               page = i,
+                               customerName = ViewBag.CustomerNameFilter,
+                               bookingId = ViewBag.BookingIdFilter
+                           })">
+                            @i
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <style>
+        body {
+            background-color: #f6f7fb;
+        }
+
+        h3, h4, h5 {
+            letter-spacing: -0.3px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 1.25rem;
+        }
+
+        .shadow-sm {
+            box-shadow: 0 10px 30px rgba(0,0,0,.04) !important;
+        }
+
+        /* SUMMARY */
+        .summary-card {
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+            .summary-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 14px 35px rgba(0,0,0,.06);
+            }
+
+        /* FILTERS */
+        .form-control-lg {
+            height: 52px;
+            border-radius: 14px;
+            font-size: .95rem;
+        }
+
+        .form-control:focus {
+            box-shadow: none;
+            background-color: #f1f3f7;
+        }
+
+        .btn-dark {
+            border-radius: 14px;
+            font-weight: 500;
+        }
+
+        /* PAYMENTS */
+        .payment-row {
+            transition: background-color .15s ease, transform .15s ease;
+            cursor: pointer;
+        }
+
+            .payment-row:hover {
+                background-color: #f8f9fd;
+                transform: scale(1.002);
+            }
+
+            .payment-row:last-child {
+                border-bottom: none !important;
+            }
+
+        .payment-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: .45em .75em;
+        }
+
+            .badge.bg-light {
+                background-color: #eef1f6 !important;
+            }
+
+        /* PAGINATION */
+        .pagination-lg .page-link {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50% !important;
+            border: none;
+            margin: 0 4px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .pagination-lg .page-item.active .page-link {
+            background: #111;
+            color: #fff;
+        }
+
+        .pagination-lg .page-link:hover {
+            background-color: #e9ecef;
+        }
+
+        /*.popover {
+            max-width: 600px;
+        }*/
+
+        .popover-body {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .summary-card-sm {
+            background: #fff;
+            border-color: #d1d5db;
+            cursor: pointer;
+            transition: box-shadow 0.15s ease;
+        }
+
+            .summary-card-sm:hover {
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .summary-card-sm span.position-absolute {
+                box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+                user-select: none;
+            }
+
+        .popover {
+            border: 2px solid #007bff;
+            border-radius: 0.5rem;
+            max-width: 800px;
+            box-shadow: 0 6px 18px rgba(0, 123, 255, 0.2);
+        }
+
+            .summary-card-sm + .popover,
+            .popover:has(.table-auto) {
+                max-width: 800px;
+            }
+
+        .popover-header {
+            background-color: #f0f4ff;
+            color: #007bff;
+            font-weight: 600;
+            border-bottom: 1px solid #007bff;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .popover-body {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .table-light {
+            background-color: #f8f9fa !important;
+        }
+
+        .popover .table-auto {
+            width: auto !important;
+            min-width: 200px;
+            max-width: 100%;
+        }
+
+        .popover-body {
+            padding: 0.5rem 0.75rem;
+            overflow-x: auto;
+        }
+
+        /* FILTER CARD */
+        .filter-card {
+            background: linear-gradient(180deg, #ffffff, #f8f9fc);
+        }
+
+        /* Modern input group */
+        .input-group-modern {
+            background: #f1f3f7;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+            .input-group-modern .input-group-text {
+                background: transparent;
+                border: none;
+                color: #6c757d;
+                padding-left: 1rem;
+            }
+
+            .input-group-modern .form-control {
+                border: none;
+                background: transparent;
+                height: 46px;
+                font-size: 0.9rem;
+                box-shadow: none;
+            }
+
+                .input-group-modern .form-control::placeholder {
+                    color: #9aa0ac;
+                }
+
+        /* Buttons */
+        .btn-modern {
+            height: 46px;
+            border-radius: 14px;
+            font-weight: 500;
+        }
+
+        .btn-light.btn-modern {
+            background: #eef1f6;
+            border: none;
+        }
+
+            .btn-light.btn-modern:hover {
+                background: #e2e6ef;
+            }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const cards = document.querySelectorAll('.summary-card-sm');
+            let activePopover = null;
+            let hideTimeout = null;
+
+            cards.forEach(card => {
+                const popover = new bootstrap.Popover(card, {
+                    html: true,
+                    sanitize: false,
+                    container: 'body',
+                    trigger: 'manual'
+                });
+
+                card.addEventListener('mouseenter', () => {
+                    clearTimeout(hideTimeout);
+
+                    if (activePopover && activePopover !== popover) {
+                        activePopover.hide();
+                    }
+
+                    popover.show();
+                    activePopover = popover;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    hideTimeout = setTimeout(() => {
+                        popover.hide();
+                        activePopover = null;
+                    }, 300);
+                });
+
+                card.addEventListener('shown.bs.popover', () => {
+                    const pop = document.querySelector('.popover');
+                    if (!pop) return;
+
+                    pop.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+                    pop.addEventListener('mouseleave', () => {
+                        hideTimeout = setTimeout(() => {
+                            popover.hide();
+                            activePopover = null;
+                        }, 300);
+                    });
+                });
+            });
+        });
+
+    </script>
+}
+
+
