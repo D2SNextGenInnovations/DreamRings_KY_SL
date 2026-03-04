@@ -220,7 +220,9 @@ namespace MrGroom_KY_SL.Web.Controllers
                         PackageId = vm.PackageId.Value,
                         EventDate = vm.EventDate,
                         Location = vm.Location,
-                        SelectedEventTypeIds = vm.SelectedEventTypeIds
+                        SelectedEventTypeIds = vm.SelectedEventTypeIds,
+                        DiscountValue = vm.DiscountValue,
+                        DiscountPercentage = vm.DiscountPercentage
                     };
 
                     var addonDtos = vm.SelectedAddons?
@@ -245,6 +247,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                         EventDate = vm.EventDate,
                         Location = vm.Location,
                         SelectedEventTypeIds = vm.SelectedEventTypeIds
+                        //DiscountValue = vm.DiscountValue,
+                        //DiscountPercentage = vm.DiscountPercentage
                     };
 
                     var addonDtos = vm.SelectedAddons?
@@ -282,6 +286,15 @@ namespace MrGroom_KY_SL.Web.Controllers
                 decimal fullAmount = packageAmount + eventTypesAmount + addonsTotal;
                 decimal prevPaid = fullBooking.Payments?.Sum(p => p.Amount) ?? 0m;
                 decimal balance = fullAmount - prevPaid;
+
+                // Get last payment with discount
+                decimal discountValue = fullBooking.DiscountValue ?? 0;
+                decimal discountPercentage = fullBooking.DiscountPercentage ?? 0;
+
+                var lastPayment = fullBooking.Payments?
+                    .OrderByDescending(p => p.PaymentId)
+                    .FirstOrDefault();
+
 
                 return Json(new
                 {
@@ -327,7 +340,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                             price = g.Key.UnitPrice,
                             total = g.Sum(x => x.Quantity * g.Key.UnitPrice)
                         })
-                        .ToList()
+                        .ToList(),
+
+                    discountVal = discountValue,
+                    discountPercent = discountPercentage
                 });
             }
             catch (Exception ex)
@@ -398,6 +414,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                 PackageId = booking.PackageId,
                 EventDate = booking.EventDate == DateTime.MinValue ? null : booking.EventDate,
                 Location = booking.Location,
+                DiscountValue = booking.DiscountValue,
+                DiscountPercentage = booking.DiscountPercentage,
                 Notes = booking.Notes,
                 Status = booking.Status,
                 SelectedStaffIds = booking.StaffMembers.Select(s => s.StaffId).ToArray(),
@@ -504,6 +522,8 @@ namespace MrGroom_KY_SL.Web.Controllers
                 existingBooking.Location = model.Location;
                 existingBooking.Notes = model.Notes;
                 existingBooking.SelectedEventTypeIds = model.SelectedEventTypeIds;
+                existingBooking.DiscountValue = model.DiscountValue;
+                existingBooking.DiscountPercentage = model.DiscountPercentage;
 
                 // Save booking
                 _bookingService.Update(existingBooking, SelectedStaffIds, SelectedAddons);
@@ -635,11 +655,14 @@ namespace MrGroom_KY_SL.Web.Controllers
                         })
                         .ToList();
 
-
-
                 // AJAX response
                 if (Request.IsAjaxRequest())
                 {
+                    // Get last payment with discount
+                    decimal discountValue = fullBooking.DiscountValue ?? 0;
+                    decimal discountPercentage = fullBooking.DiscountPercentage ?? 0;
+
+                    // Get last payment for method/type
                     var lastPayment = fullBooking.Payments?
                         .OrderByDescending(p => p.PaymentId)
                         .FirstOrDefault();
@@ -671,7 +694,9 @@ namespace MrGroom_KY_SL.Web.Controllers
                         addons = addonSummary,
                         paymentMethod = lastPayment?.PaymentMethod ?? "",
                         paymentType = lastPayment?.PaymentType ?? "",
-                        remarks = lastPayment?.Remarks ?? ""
+                        remarks = lastPayment?.Remarks ?? "",
+                        discountVal = discountValue,       
+                        discountPercent = discountPercentage
                     });
 
                 }
@@ -762,7 +787,7 @@ namespace MrGroom_KY_SL.Web.Controllers
                 if (payment == null)
                     return Json(new { success = false, message = "Payment is missing." });
 
-                // SAFELY parse Amount using invariant culture
+                // Parse Amount safely (for decimal culture issues)
                 if (payment.Amount <= 0)
                 {
                     decimal parsedAmount = 0;
@@ -771,7 +796,7 @@ namespace MrGroom_KY_SL.Web.Controllers
                 }
 
                 if (payment.Amount <= 0)
-                    return Json(new { success = false, message = "Invalid payment amount." });
+                    return Json(new { success = false, message = "Payment amount must be greater than zero." });
 
                 // Validate BookingId
                 if (payment.BookingId <= 0)
@@ -785,20 +810,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                     return Json(new { success = false, message = "BookingId is missing." });
 
                 // Load booking
-                var booking = _bookingService.GetById(payment.BookingId);
+                var booking = _bookingService.GetAll().Include(b => b.Payments).FirstOrDefault(b => b.BookingId == payment.BookingId);
+
                 if (booking == null)
                     return Json(new { success = false, message = "Booking not found." });
-
-                decimal remaining = booking.RemainingAmount;
-
-                if (payment.Amount > remaining)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Payment amount exceeds remaining balance."
-                    });
-                }
 
                 if (booking.Status == "Canceled")
                 {
@@ -809,35 +824,93 @@ namespace MrGroom_KY_SL.Web.Controllers
                     });
                 }
 
-                // Ensure payment is linked to booking
+                // Only allow discount to be set ONCE
+                bool discountAlreadySet = (booking.DiscountValue ?? 0m) > 0m
+                                          || (booking.DiscountPercentage ?? 0m) > 0m;
+
+                if (!discountAlreadySet)
+                {
+                    decimal parsedDiscountValue;
+                    decimal parsedDiscountPercent;
+
+                    bool hasDiscountValue = decimal.TryParse(
+                        Request.Form["DiscountValue"],
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture,
+                        out parsedDiscountValue);
+
+                    bool hasDiscountPercent = decimal.TryParse(
+                        Request.Form["DiscountPercentage"],
+                        NumberStyles.Any,
+                        CultureInfo.InvariantCulture,
+                        out parsedDiscountPercent);
+
+                    if ((hasDiscountValue && parsedDiscountValue > 0) ||
+                        (hasDiscountPercent && parsedDiscountPercent > 0))
+                    {
+                        _bookingService.UpdateDiscount(
+                            booking.BookingId,
+                            parsedDiscountValue,
+                            parsedDiscountPercent
+                        );
+
+                        // refresh booking values locally
+                        booking.DiscountValue = parsedDiscountValue;
+                        booking.DiscountPercentage = parsedDiscountPercent;
+                    }
+                }
+                //_unitOfWork.Save();   // IMPORTANT
+
+                // Calculate remaining (after booking-level discount)
+                decimal total = booking.GrandTotal;
+                decimal discount = booking.DiscountValue ?? 0m;
+                decimal netTotal = total - discount;
+                decimal alreadyPaid = booking.Payments?.Sum(p => p.Amount) ?? 0m;
+                decimal remaining = netTotal - alreadyPaid;
+
+                if (payment.Amount > remaining)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Payment exceeds remaining balance."
+                    });
+                }
+
+                // Finalize payment fields
                 payment.BookingId = booking.BookingId;
                 payment.Booking = null;
 
-                // Set PaymentDate if not already set
                 if (payment.PaymentDate == default(DateTime))
                     payment.PaymentDate = DateTime.UtcNow;
 
                 // Save payment
                 _paymentService.AddPayment(payment);
 
-                var updatedBooking = _bookingService.GetAll().Include(b => b.Payments).FirstOrDefault(b => b.BookingId == payment.BookingId);
+                // Recalculate total paid after save
+                decimal updatedTotalPaid = alreadyPaid + payment.Amount;
 
-                decimal totalPaid = updatedBooking.Payments.Sum(p => p.Amount);
-                string status = totalPaid >= 10000 ? "Confirmed" : "Pending";
+                // Update booking status dynamically
+                string status;
 
-                _bookingService.UpdateStatus(updatedBooking.BookingId, status);
+                if (updatedTotalPaid >= netTotal)
+                    status = "Paid";
+                else if (updatedTotalPaid > 0)
+                    status = "Confirmed";
+                else
+                    status = "Pending";
 
-                // Return success with invoice URL
+                _bookingService.UpdateStatus(booking.BookingId, status);
+
                 return Json(new
                 {
                     success = true,
-                    message = "Payment saved!",
-                    invoiceUrl = Url.Action("GenerateInvoice", new { id = payment.BookingId })
+                    message = "Payment saved successfully!",
+                    invoiceUrl = Url.Action("GenerateInvoice", new { id = booking.BookingId })
                 });
             }
             catch (Exception ex)
             {
-                // Log exception (you can replace with proper logging)
                 System.Diagnostics.Debug.WriteLine(ex);
                 return Json(new { success = false, message = ex.Message });
             }
@@ -1128,6 +1201,7 @@ namespace MrGroom_KY_SL.Web.Controllers
             }, JsonRequestBehavior.AllowGet);
         }
 
+
         [HttpGet]
         public ActionResult SendWhatsAppClickToChat(int id)
         {
@@ -1142,7 +1216,6 @@ namespace MrGroom_KY_SL.Web.Controllers
             if (phone.StartsWith("0"))
                 phone = "94" + phone.Substring(1);
 
-            // Safety check
             if (phone.Length < 11)
                 return new HttpStatusCodeResult(400, "Invalid phone number");
 
@@ -1151,17 +1224,25 @@ namespace MrGroom_KY_SL.Web.Controllers
             decimal eventTypesAmount = booking.BookingEventTypes?.Sum(e => e.EventType.Price) ?? 0m;
             decimal addonsAmount = booking.BookingAddons?.Sum(a => a.Quantity * a.UnitPrice) ?? 0m;
 
-            decimal total = packageAmount + eventTypesAmount + addonsAmount;
+            decimal total = booking.GrandTotal;
+            decimal discount = booking.DiscountValue ?? 0m;
+            decimal netTotal = total - discount;
             decimal paid = booking.Payments?.Sum(p => p.Amount) ?? 0m;
-            decimal balance = total - paid;
+            decimal balance = netTotal - paid;
+
+            // Build discount line only if exists
+            string discountLine = discount > 0
+                ? "Discount: Rs " + discount.ToString("N2") + "\n"
+                : "";
 
             // message
             string message =
                 "Booking Confirmed\n\n" +
                 "Customer: " + booking.Customer.FirstName + " " + booking.Customer.LastName + "\n" +
-                //"Event Date: " + booking.EventDate.ToString("yyyy-MM-dd") + "\n" +
-                "Event Date: " + (booking.EventDate.HasValue && booking.EventDate.Value > DateTime.MinValue ? booking.EventDate.Value.ToString("yyyy-MM-dd") : "N/A") + "\n" +
-
+                "Event Date: " +
+                (booking.EventDate.HasValue && booking.EventDate.Value > DateTime.MinValue
+                    ? booking.EventDate.Value.ToString("yyyy-MM-dd")
+                    : "N/A") + "\n" +
                 "Location: " + booking.Location + "\n\n" +
 
                 "Package: " + booking.Package?.Name + "\n" +
@@ -1185,11 +1266,12 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                 "Payment Summary\n" +
                 "Total: Rs " + total.ToString("N2") + "\n" +
+                discountLine +
+                (discount > 0 ? "Net Total: Rs " + netTotal.ToString("N2") + "\n" : "") +
                 "Paid: Rs " + paid.ToString("N2") + "\n" +
                 "Balance: Rs " + balance.ToString("N2") + "\n\n" +
                 "Dream Rings Photography";
 
-            // Encode + Redirect 
             string encodedMessage = HttpUtility.UrlEncode(message);
             string url = $"https://wa.me/{phone}?text={encodedMessage}";
 

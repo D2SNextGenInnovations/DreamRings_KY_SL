@@ -1,0 +1,164 @@
+﻿
+@{
+    ViewBag.Title = "License Activation";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background: #f4f6f9;
+    }
+
+    .activation-container {
+        max-width: 900px;
+        margin: 60px auto;
+    }
+
+    .activation-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        padding: 40px;
+    }
+
+    .activation-header {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+
+        .activation-header h2 {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+    .license-status {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
+
+    .status-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+
+    .status-inactive {
+        background: #fdecea;
+        color: #c62828;
+        border: 1px solid #f5c6cb;
+    }
+
+    .form-control {
+        height: 45px;
+        border-radius: 8px;
+    }
+
+    .btn-primary {
+        border-radius: 8px;
+        height: 45px;
+        font-weight: 500;
+    }
+
+    .info-box {
+        background: #f8f9fc;
+        padding: 20px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+        .info-box ul {
+            padding-left: 18px;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+        }
+
+    .error-msg {
+        color: #c62828;
+        font-size: 13px;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="activation-container">
+    <div class="activation-card">
+
+        <div class="activation-header">
+            <h2>🔐 Software License Management</h2>
+            <p>Activate and manage your product license securely.</p>
+        </div>
+
+        <!-- License Status -->
+        @if (ViewBag.IsActive == true)
+        {
+            <div class="license-status status-active">
+                ✅ Your license is active <br />
+                Expiry Date: <strong>@Convert.ToDateTime(ViewBag.Expiry).ToString("dd MMM yyyy")</strong>
+            </div>
+        }
+        else
+        {
+            <div class="license-status status-inactive">
+                ❌ No active license found. Please activate your product.
+            </div>
+        }
+
+        <div class="row">
+
+            <!-- Left: Activation Form -->
+            <div class="col-md-6">
+                <h4>Activate License</h4>
+
+                @using (Html.BeginForm("Activate", "License", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-group">
+                        <label>Product Key</label>
+                        <input type="text"
+                               name="productKey"
+                               class="form-control"
+                               placeholder="XXXX-XXXX-XXXX"
+                               required />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Activate License
+                    </button>
+
+                    if (ViewBag.Error != null)
+                    {
+                        <div class="error-msg">
+                            @ViewBag.Error
+                        </div>
+                    }
+                }
+            </div>
+
+            <!-- Right: Info Section -->
+            <div class="col-md-6">
+                <div class="info-box">
+                    <h5>ℹ License Information</h5>
+                    <ul>
+                        <li>Each product key is uniquely generated.</li>
+                        <li>License validity is verified securely using encryption.</li>
+                        <li>Expired licenses will restrict system access.</li>
+                        <li>Contact support for renewal assistance.</li>
+                    </ul>
+
+                    <hr />
+
+                    <strong>Need Help?</strong><br />
+                    D2SNextGen@gmail.com<br />
+                    +94 XX XXX XXXX
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>

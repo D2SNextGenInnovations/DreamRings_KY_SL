@@ -58,9 +58,15 @@ namespace MrGroom_KY_SL.Models
         [NotMapped]
         public decimal GrandTotal => (Package?.BasePrice ?? 0) + EventTypesTotal + AddonsTotal;
 
+        //[NotMapped]
+        //public decimal RemainingAmount => GrandTotal - (Payments?.Sum(p => p.Amount) ?? 0);
+        //[NotMapped]
+        //public decimal RemainingAmount => GrandTotal - (Payments?.Sum(p => (p.Amount + (p.DiscountValue ?? 0))) ?? 0);
         [NotMapped]
-        public decimal RemainingAmount => GrandTotal - (Payments?.Sum(p => p.Amount) ?? 0);
+        public decimal NetTotal => GrandTotal - (DiscountValue ?? 0);
 
+        [NotMapped]
+        public decimal RemainingAmount => NetTotal - TotalPaid;
 
         [NotMapped]
         public string PaymentStatus
@@ -87,5 +93,10 @@ namespace MrGroom_KY_SL.Models
 
         [NotMapped]
         public decimal AddonsTotal => BookingAddons?.Sum(a => a.Quantity * a.UnitPrice) ?? 0;
+
+        //[NotMapped]
+        //public decimal TotalDiscount => Payments?.Sum(p => p.DiscountValue ?? 0) ?? 0;
+        public decimal? DiscountValue { get; set; }
+        public decimal? DiscountPercentage { get; set; }
     }
 }

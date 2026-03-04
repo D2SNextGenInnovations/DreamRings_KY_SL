@@ -195,11 +195,14 @@
     <Compile Include="Controllers\CustomerController.cs" />
     <Compile Include="Controllers\EmailSenderController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\LicenseController.cs" />
     <Compile Include="Controllers\PackageController.cs" />
     <Compile Include="Controllers\StaffController.cs" />
     <Compile Include="Filters\CustomAuthorizeAttribute.cs" />
     <Compile Include="Filters\InvoicePdfGenerator.cs" />
+    <Compile Include="Filters\LicenseCheckAttribute.cs" />
     <Compile Include="Filters\NoCacheAttribute.cs" />
+    <Compile Include="Filters\SkipLicenseCheckAttribute.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -233,6 +236,8 @@
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
     <None Include="Properties\PublishProfiles\Disanka.pubxml" />
+    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
+    <None Include="Properties\PublishProfiles\FolderProfile1.pubxml" />
     <None Include="Scripts\jquery-3.3.1.intellisense.js" />
     <Content Include="Scripts\jquery-3.3.1.js" />
     <Content Include="Scripts\jquery-3.3.1.min.js" />
@@ -321,6 +326,8 @@
     <Content Include="Views\CompanyInfo\Delete.cshtml" />
     <Content Include="Views\CompanyInfo\Index.cshtml" />
     <Content Include="Views\AdminPayments\Payments.cshtml" />
+    <Content Include="Views\License\Activate.cshtml" />
+    <Content Include="Views\License\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

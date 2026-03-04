@@ -471,6 +471,12 @@
                         <i class="bi bi-credit-card-2-front me-2"></i> Payment Details
                     </h5>
                     <dl class="row mb-0">
+
+                        <dt class="col-sm-5"><strong>Total Discount</strong></dt>
+                        <dd class="col-sm-7">
+                            @String.Format("Rs {0:N2}", Model.DiscountValue ?? 0)
+                        </dd>
+
                         <dt class="col-sm-5"><strong>Total Paid</strong></dt>
                         <dd class="col-sm-7">@String.Format("Rs {0:N2}", Model.TotalPaid)</dd>
 

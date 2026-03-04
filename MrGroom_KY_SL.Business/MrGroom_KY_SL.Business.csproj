@@ -116,6 +116,7 @@
     <Compile Include="Services\DashboardService.cs" />
     <Compile Include="Services\EmailService.cs" />
     <Compile Include="Services\EventTypeService.cs" />
+    <Compile Include="Services\LicenseService.cs" />
     <Compile Include="Services\PackageEventTypeService.cs" />
     <Compile Include="Services\PackageItemService.cs" />
     <Compile Include="Services\PackagePdfService.cs" />

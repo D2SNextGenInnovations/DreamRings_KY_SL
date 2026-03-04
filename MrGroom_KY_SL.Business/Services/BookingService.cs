@@ -168,6 +168,12 @@ namespace MrGroom_KY_SL.Business.Services
             existing.EventDate = booking.EventDate;
             existing.Location = booking.Location;
             existing.Notes = booking.Notes;
+            //existing.DiscountValue = booking.DiscountValue;
+            //existing.DiscountPercentage = booking.DiscountPercentage;
+            if (booking.DiscountValue.HasValue)
+                existing.DiscountValue = booking.DiscountValue;
+            if (booking.DiscountPercentage.HasValue)
+                existing.DiscountPercentage = booking.DiscountPercentage;
 
             if (!string.IsNullOrWhiteSpace(booking.Status))
                 existing.Status = booking.Status;
@@ -290,6 +296,19 @@ namespace MrGroom_KY_SL.Business.Services
                 throw new Exception("Booking not found");
 
             booking.Status = status;
+            _unitOfWork.Save();
+        }
+
+        public void UpdateDiscount(int bookingId, decimal discountValue, decimal discountPercentage)
+        {
+            var booking = _unitOfWork.BookingRepository.GetById(bookingId);
+
+            if (booking == null)
+                throw new Exception("Booking not found");
+
+            booking.DiscountValue = discountValue;
+            booking.DiscountPercentage = discountPercentage;
+
             _unitOfWork.Save();
         }
     }

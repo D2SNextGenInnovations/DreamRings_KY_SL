@@ -36,7 +36,7 @@ namespace MrGroom_KY_SL.Data
         public DbSet<CompanyInfo> CompanyInfos { get; set; }
         public DbSet<BookingEventType> BookingEventTypes { get; set; }
         public DbSet<BookingAddon> BookingAddons { get; set; }
-
+        public DbSet<License> Licenses { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

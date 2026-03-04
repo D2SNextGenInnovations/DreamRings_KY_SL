@@ -10,6 +10,7 @@ namespace MrGroom_KY_SL.Web
         {
             filters.Add(new HandleErrorAttribute());
             filters.Add(new NoCacheAttribute());
+            filters.Add(new LicenseCheckAttribute());
         }
     }
 }

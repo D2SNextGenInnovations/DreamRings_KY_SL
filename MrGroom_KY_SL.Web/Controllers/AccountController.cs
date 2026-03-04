@@ -13,6 +13,7 @@ using System.Web.Security;
 namespace MrGroom_KY_SL.Web.Controllers
 {
     [NoCache]
+    [SkipLicenseCheck]
     public class AccountController : Controller
     {
         private readonly UserService _userService = new UserService();

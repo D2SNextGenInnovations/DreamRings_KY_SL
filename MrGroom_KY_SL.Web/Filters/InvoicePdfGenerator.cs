@@ -190,12 +190,22 @@ namespace MrGroom_KY_SL.Models
                 grand.HorizontalAlignment = Element.ALIGN_RIGHT;
 
                 decimal grandTotal = packageTotal + addonsTotal;
+                decimal totalDiscount = b.DiscountValue ?? 0;
+                decimal netTotal = grandTotal - totalDiscount;
 
-                grand.AddCell(Cell("Grand Total", bold, bg: grey));
-                grand.AddCell(Cell(Money(grandTotal), bold, Element.ALIGN_RIGHT, grey));
+                grand.AddCell(Cell("Grand Total", bold));
+                grand.AddCell(Cell(Money(grandTotal), bold, Element.ALIGN_RIGHT));
+
+                grand.AddCell(Cell("Total Discount", bold));
+                grand.AddCell(Cell("- " + Money(totalDiscount), bold, Element.ALIGN_RIGHT));
+
+                grand.AddCell(Cell("Net Total", bold, bg: grey));
+                grand.AddCell(Cell(Money(netTotal), bold, Element.ALIGN_RIGHT, grey));
+
                 doc.Add(grand);
                 doc.Add(new Paragraph("\n"));
 
+                //// ---------------- PAYMENT DETAILS ----------------
                 // ---------------- PAYMENT DETAILS ----------------
                 if (b.Payments != null && b.Payments.Any())
                 {
@@ -211,17 +221,23 @@ namespace MrGroom_KY_SL.Models
                     {
                         paidTotal += p.Amount;
 
-                        string leftText =
+                        string paymentLine =
                             $"{p.PaymentType}" +
                             (p.PaymentDate != DateTime.MinValue
                                 ? $" ({p.PaymentDate:yyyy-MM-dd})"
                                 : "");
 
-                        pay.AddCell(Cell(leftText, normal));
+                        pay.AddCell(Cell(paymentLine, normal));
                         pay.AddCell(Cell(Money(p.Amount), normal, Element.ALIGN_RIGHT));
                     }
 
-                    decimal balance = grandTotal - paidTotal;
+                    pay.AddCell(Cell("Total Paid", bold, Element.ALIGN_RIGHT));
+                    pay.AddCell(Cell(Money(paidTotal), bold, Element.ALIGN_RIGHT));
+
+                    doc.Add(pay);
+                    doc.Add(new Paragraph("\n"));
+
+                    decimal balance = netTotal - paidTotal;
 
                     PdfPTable balanceTbl = new PdfPTable(2);
                     balanceTbl.WidthPercentage = 40;
@@ -231,14 +247,57 @@ namespace MrGroom_KY_SL.Models
                     balanceTbl.AddCell(Cell(Money(balance), bold, Element.ALIGN_RIGHT, grey));
 
                     doc.Add(balanceTbl);
-
-                    // ---- TOTAL PAID ----
-                    pay.AddCell(Cell("Total Paid", bold, Element.ALIGN_RIGHT));
-                    pay.AddCell(Cell(Money(paidTotal), bold, Element.ALIGN_RIGHT));
-
-                    doc.Add(pay);
                     doc.Add(new Paragraph("\n"));
                 }
+                //if (b.Payments != null && b.Payments.Any())
+                //{
+                //    PdfPTable pay = new PdfPTable(2);
+                //    pay.WidthPercentage = 100;
+                //    pay.SetWidths(new float[] { 70, 30 });
+
+                //    pay.AddCell(Cell("Payment Details", bold, bg: grey, colspan: 2));
+
+                //    decimal paidTotal = 0m;
+
+                //    foreach (var p in b.Payments.OrderBy(x => x.PaymentDate))
+                //    {
+                //        paidTotal += p.Amount;
+
+                //        string leftText =
+                //            $"{p.PaymentType}" +
+                //            (p.PaymentDate != DateTime.MinValue
+                //                ? $" ({p.PaymentDate:yyyy-MM-dd})"
+                //                : "");
+
+                //        string paymentLine = leftText;
+
+                //        if ((p.DiscountValue ?? 0) > 0)
+                //        {
+                //            paymentLine += $" (Discount: {Money(p.DiscountValue ?? 0)})";
+                //        }
+
+                //        pay.AddCell(Cell(paymentLine, normal));
+                //        pay.AddCell(Cell(Money(p.Amount), normal, Element.ALIGN_RIGHT));
+                //    }
+
+                //    decimal balance = netTotal - paidTotal;
+
+                //    PdfPTable balanceTbl = new PdfPTable(2);
+                //    balanceTbl.WidthPercentage = 40;
+                //    balanceTbl.HorizontalAlignment = Element.ALIGN_RIGHT;
+
+                //    balanceTbl.AddCell(Cell("Balance Due", bold, bg: grey));
+                //    balanceTbl.AddCell(Cell(Money(balance), bold, Element.ALIGN_RIGHT, grey));
+
+                //    doc.Add(balanceTbl);
+
+                //    // ---- TOTAL PAID ----
+                //    pay.AddCell(Cell("Total Paid", bold, Element.ALIGN_RIGHT));
+                //    pay.AddCell(Cell(Money(paidTotal), bold, Element.ALIGN_RIGHT));
+
+                //    doc.Add(pay);
+                //    doc.Add(new Paragraph("\n"));
+                //}
 
 
                 // ---------------- SIGNATURE ----------------
@@ -305,16 +364,4 @@ You have to reserve your date by paying an advance of Rs.10,000.00 (Non refundab
             return c;
         }
     }
-
-    //private static PdfPCell Cell(string text, Font font, int align = Element.ALIGN_LEFT,
-    //                                 BaseColor bg = null, int colspan = 1)
-    //    {
-    //        PdfPCell c = new PdfPCell(new Phrase(text, font));
-    //        c.HorizontalAlignment = align;
-    //        c.Colspan = colspan;
-    //        c.Padding = 6;
-    //        if (bg != null) c.BackgroundColor = bg;
-    //        return c;
-    //    }
-    //}
 }

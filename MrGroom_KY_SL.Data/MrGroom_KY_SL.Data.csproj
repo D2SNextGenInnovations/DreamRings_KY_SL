@@ -148,6 +148,18 @@
     <Compile Include="Migrations\202602051516312_AddPartialPaymentsSupport.designer.cs">
       <DependentUpon>202602051516312_AddPartialPaymentsSupport.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202603011751080_AddCompanyNameToLicense.cs" />
+    <Compile Include="Migrations\202603011751080_AddCompanyNameToLicense.designer.cs">
+      <DependentUpon>202603011751080_AddCompanyNameToLicense.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202603020849521_AddCustomerWiseDiscount.cs" />
+    <Compile Include="Migrations\202603020849521_AddCustomerWiseDiscount.designer.cs">
+      <DependentUpon>202603020849521_AddCustomerWiseDiscount.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202603040422334_AddDiscountToBookings.cs" />
+    <Compile Include="Migrations\202603040422334_AddDiscountToBookings.designer.cs">
+      <DependentUpon>202603040422334_AddDiscountToBookings.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\IRepository.cs" />
@@ -217,6 +229,15 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202602051516312_AddPartialPaymentsSupport.resx">
       <DependentUpon>202602051516312_AddPartialPaymentsSupport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202603011751080_AddCompanyNameToLicense.resx">
+      <DependentUpon>202603011751080_AddCompanyNameToLicense.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202603020849521_AddCustomerWiseDiscount.resx">
+      <DependentUpon>202603020849521_AddCustomerWiseDiscount.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202603040422334_AddDiscountToBookings.resx">
+      <DependentUpon>202603040422334_AddDiscountToBookings.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

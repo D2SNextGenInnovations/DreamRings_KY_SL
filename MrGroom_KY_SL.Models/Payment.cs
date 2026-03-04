@@ -26,6 +26,9 @@ namespace MrGroom_KY_SL.Models
         [StringLength(50)]
         public string PaymentType { get; set; } // Advance, Half, Full
 
+        //public decimal? DiscountValue { get; set; }
+        //public decimal? DiscountPercentage { get; set; }
+
         [StringLength(50)]
         public string Status { get; set; } = "Paid";
         [StringLength(250)]

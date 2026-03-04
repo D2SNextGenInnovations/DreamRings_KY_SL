@@ -22,5 +22,7 @@ namespace MrGroom_KY_SL.Web.Models
         public string Status { get; set; }
         public string Notes { get; set; }
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
+        public decimal? DiscountValue { get; set; }
+        public decimal? DiscountPercentage { get; set; }
     }
 }
