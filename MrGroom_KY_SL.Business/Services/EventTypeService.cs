@@ -14,7 +14,7 @@ namespace MrGroom_KY_SL.Business.Services
 
         public IEnumerable<EventType> GetAll()
         {
-            return _unitOfWork.EventTypeRepository.GetAll();
+            return _unitOfWork.EventTypeRepository.GetAll().Where(x => x.IsActive == true); //V3001
         }
 
         public EventType GetById(int id)
@@ -42,12 +42,16 @@ namespace MrGroom_KY_SL.Business.Services
 
         public void Delete(int id)
         {
-            var eventType = _unitOfWork.EventTypeRepository.GetById(id);
-            if (eventType != null)
-            {
-                _unitOfWork.EventTypeRepository.Delete(eventType);
-                _unitOfWork.Save();
-            }
+            //V3001
+            var entity = _unitOfWork.EventTypeRepository.GetById(id);
+
+            if (entity == null)
+                throw new KeyNotFoundException("EventType not found");
+
+            entity.IsActive = false; 
+            _unitOfWork.EventTypeRepository.Update(entity);
+            _unitOfWork.Save();
+            //V3001
         }
     }
 }

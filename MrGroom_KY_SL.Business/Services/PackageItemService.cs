@@ -14,7 +14,7 @@ namespace MrGroom_KY_SL.Business.Services
 
         public IEnumerable<PackageItem> GetAll()
         {
-            return _unitOfWork.PackageItemRepository.GetAll();
+            return _unitOfWork.PackageItemRepository.GetAll().Where(x => x.IsActive == true);//V3001
         }
 
         public PackageItem GetById(int id)
@@ -62,10 +62,15 @@ namespace MrGroom_KY_SL.Business.Services
         public void Delete(int id)
         {
             var entity = _unitOfWork.PackageItemRepository.GetById(id);
-            if (entity == null) throw new KeyNotFoundException($"PackageItem with ID {id} not found.");
+            //V3001
+            if (entity == null)
+                throw new KeyNotFoundException($"PackageItem with ID {id} not found.");
 
-            _unitOfWork.PackageItemRepository.Delete(entity);
+            // Soft delete instead of physical delete
+            entity.IsActive = false;
+
             _unitOfWork.Save();
+            //V3001
         }
     }
 }

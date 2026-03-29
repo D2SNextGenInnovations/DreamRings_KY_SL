@@ -21,7 +21,7 @@ namespace MrGroom_KY_SL.Web.Controllers
         private readonly PackageService _packageService = new PackageService();
         private readonly EventTypeService _eventService = new EventTypeService();
 
-        public ActionResult Index(string searchTerm, int page = 1, string manage = null)
+        public ActionResult Index(string searchTerm, int page = 1, string manage = null, bool showInactive = false)
         {
             try
             {
@@ -30,11 +30,25 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                 var items = _eventService.GetAll();
 
+                // V3001 Hide inactive by default
+                if (!showInactive)
+                {
+                    items = items.Where(i => i.IsActive == true);
+                }
+
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     searchTerm = searchTerm.ToLower();
                     items = items.Where(i => i.Name.ToLower().Contains(searchTerm));
                 }
+
+                // V3001
+                var allItems = _eventService.GetAll();
+
+                ViewBag.TotalItems = allItems.Count();
+                ViewBag.ActiveItems = allItems.Count(i => i.IsActive == true);
+                ViewBag.InactiveItems = allItems.Count(i => i.IsActive != true);
+                // // V3001
 
                 int totalItems = items.Count();
                 int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
@@ -109,12 +123,15 @@ namespace MrGroom_KY_SL.Web.Controllers
             try
             {
                 var model = _eventService.GetById(id);
-                if (model == null)
+
+                // V3001 check deleete items
+                if (model == null || model.IsActive == false)
                 {
-                    TempData["ToastrMessage"] = "Event type not found!";
+                    TempData["ToastrMessage"] = "Event type not found or inactive!";
                     TempData["ToastrType"] = "warning";
                     return RedirectToAction("Index");
                 }
+
                 return View(model);
             }
             catch (Exception ex)
@@ -133,6 +150,17 @@ namespace MrGroom_KY_SL.Web.Controllers
 
             try
             {
+                // V3001
+                var existing = _eventService.GetById(model.EventTypeId);
+
+                // check deleted items
+                if (existing == null || existing.IsActive == false)
+                {
+                    TempData["ToastrMessage"] = "Cannot update inactive event type!";
+                    TempData["ToastrType"] = "warning";
+                    return RedirectToAction("Index");
+                }
+                // V3001
                 _eventService.Update(model);
                 TempData["ToastrMessage"] = "Event type updated successfully!";
                 TempData["ToastrType"] = "success";

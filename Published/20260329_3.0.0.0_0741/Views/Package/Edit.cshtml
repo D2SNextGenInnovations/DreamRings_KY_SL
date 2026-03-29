@@ -1,0 +1,637 @@
+﻿@model MrGroom_KY_SL.Web.Models.PackageViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Edit Package";
+}
+
+<div class="package-edit-wrapper py-5">
+    <div class="package-edit-card p-5 shadow-lg">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-gradient">
+                <i class="bi bi-box2-heart me-2"></i> Create Package
+            </h2>
+            <p class="text-muted">Design a beautiful package with stunning details ✨</p>
+        </div>
+
+        @using (Html.BeginForm("Edit", "Package", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.PackageId)
+
+            <!-- Package Name -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Package Name</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-tag"></i></span>
+                    @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = "Enter package name" })
+                </div>
+                @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Description -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Description</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-card-text"></i></span>
+                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 3, placeholder = "Enter package description" })
+                </div>
+                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Duration -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Duration (Hours)</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-clock"></i></span>
+                    @Html.TextBoxFor(m => m.DurationHours, new { @class = "form-control", placeholder = "Enter duration in hours", type = "number", min = "1" })
+                </div>
+                @Html.ValidationMessageFor(m => m.DurationHours, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Package Items -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold"><i class="bi bi-layers me-1"></i> Package Items</label>
+
+                <!-- Select All / Unselect All -->
+                <div class="d-flex justify-content-end gap-2 mb-2">
+                    <button type="button" id="btnSelectAll" class="btn btn-sm btn-success">
+                        Select All
+                    </button>
+
+                    <button type="button" id="btnUnselectAll" class="btn btn-sm btn-danger">
+                        Unselect All
+                    </button>
+                </div>
+
+                <div class="p-3 border rounded" style="background:#f8fafc;">
+
+                    @if (Model.PackageItemsFull != null)
+                    {
+                        for (int i = 0; i < Model.PackageItemsFull.Count(); i++)
+                        {
+                            var item = Model.PackageItemsFull.ElementAt(i);
+
+                            <div class="pkg-card p-2 mb-2 shadow-sm" data-id="@item.PackageItemId">
+
+                                <div class="row align-items-center">
+
+                                    <!-- Checkbox -->
+                                    <div class="col-1 d-flex justify-content-center">
+                                        <input type="checkbox"
+                                               class="form-check-input pkg-check"
+                                               name="SelectedPackageItems"
+                                               value="@item.PackageItemId"
+                                               data-price="@item.Price"
+                                               data-id="@item.PackageItemId"
+                                               id="item_@item.PackageItemId"
+                                               @(Model.SelectedPackageItemDetails != null && Model.SelectedPackageItemDetails.Any(p => p.PackageItemId == item.PackageItemId) ? "checked=\"checked\"" : "") />
+
+                                    </div>
+
+                                    <!-- Hidden fields for model binding -->
+                                    <input type="hidden" name="SelectedPackageItemDetails[@i].PackageItemId" value="@item.PackageItemId" />
+                                    <input type="hidden" name="SelectedPackageItemDetails[@i].UnitPrice" value="@item.Price" />
+                                    <input type="hidden" name="SelectedPackageItemDetails[@i].Qty" class="hidden-qty" data-id="@item.PackageItemId" value="1" />
+                                    <!-- Name -->
+                                    <div class="col-4">
+                                        <label for="item_@item.PackageItemId" class="small fw-semibold">
+                                            @item.Name
+                                        </label>
+                                    </div>
+
+                                    <!-- × 1 -->
+                                    <div class="col-1 text-left fw-bold small">× 1</div>
+
+                                    <!-- Price (pill) -->
+                                    <div class="col-2">
+                                        <span class="price-pill small">
+                                            @item.Price.ToString("N2")
+                                        </span>
+                                    </div>
+
+                                    <!-- Qty input with + - buttons -->
+                                    <div class="col-2 d-flex align-items-center gap-1">
+                                        <button type="button" class="qty-btn minus btn btn-sm btn-outline-primary" data-id="@item.PackageItemId">−</button>
+
+                                        <input type="number"
+                                               class="form-control form-control-sm qty-input"
+                                               style="width:60px"
+                                               value="1"
+                                               min="1"
+                                               data-id="@item.PackageItemId"
+                                               disabled />
+
+                                        <button type="button" class="qty-btn plus btn btn-sm btn-outline-primary" data-id="@item.PackageItemId">+</button>
+                                    </div>
+
+                                    <!-- Amount (pill) -->
+                                    <div class="col-2 text-end">
+                                        <span class="amount-pill small amount-value" data-id="@item.PackageItemId">
+                                            0.00
+                                        </span>
+                                    </div>
+
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    <!-- Total Amount -->
+                    <div class="mt-3 p-3 border rounded bg-white shadow-sm d-flex justify-content-between">
+                        <h6 class="fw-semibold mb-0">Total Package Item Amount:</h6>
+                        <h6 id="totalItemPrice" class="text-primary fw-bold mb-0 text-end">
+                            Rs. 0.00
+                        </h6>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Event Types -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar2-event me-1"></i> Event Types</label>
+
+                <!-- Select All / Unselect All -->
+                <div class="d-flex justify-content-end gap-2 mb-2">
+                    <button type="button" id="btnSelectAllEvents" class="btn btn-sm btn-success">
+                        Select All
+                    </button>
+
+                    <button type="button" id="btnUnselectAllEvents" class="btn btn-sm btn-danger">
+                        Unselect All
+                    </button>
+                </div>
+
+                <div class="p-3 border rounded" style="background:#f8fafc;">
+
+                    @if (Model.PackageEventsFull != null)
+                    {
+                        for (int i = 0; i < Model.PackageEventsFull.Count(); i++)
+                        {
+                            var item = Model.PackageEventsFull.ElementAt(i);
+
+                            <div class="pkg-card p-2 mb-2 shadow-sm" data-id="@item.EventTypeId">
+
+                                <div class="row align-items-center">
+
+                                    <!-- Checkbox -->
+                                    <div class="col-1 d-flex justify-content-center">
+                                        <input type="checkbox"
+                                               class="form-check-input event-check"
+                                               name="SelectedEventTypeIds"
+                                               value="@item.EventTypeId"
+                                               data-price="@item.Price"
+                                               data-id="@item.EventTypeId"
+                                               id="event_@item.EventTypeId"
+                                               @(Model.SelectedEventTypeIds != null && Model.SelectedEventTypeIds.Contains(item.EventTypeId) ? "checked=\"checked\"" : "") />
+
+
+                                    </div>
+
+                                    <!-- Hidden fields for model binding -->
+                                    <input type="hidden" name="SelectedPackageEventTypePacakgeDetails[@i].PacakgeEventTypeId" value="@item.EventTypeId" />
+                                    <input type="hidden" name="SelectedPackageEventTypePacakgeDetails[@i].UnitPrice" value="@item.Price" />
+                                    <input type="hidden" name="SelectedPackageEventTypePacakgeDetails[@i].Name" value="@item.Name" />
+
+                                    <!-- Name -->
+                                    <div class="col-5">
+                                        <label for="event_@item.EventTypeId" class="small fw-semibold">
+                                            @item.Name
+                                        </label>
+                                    </div>
+
+                                    <!-- Price (pill) -->
+                                    <div class="col-3">
+                                        <span class="price-pill small">
+                                            @item.Price.ToString("N2")
+                                        </span>
+                                    </div>
+
+                                    <!-- Amount (pill) -->
+                                    <div class="col-3 text-end">
+                                        <span class="amount-pill small event-amount-value" data-id="@item.EventTypeId">
+                                            0.00
+                                        </span>
+                                    </div>
+
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    <!-- Total Event Amount -->
+                    <div class="mt-3 p-3 border rounded bg-white shadow-sm d-flex justify-content-between">
+                        <h6 class="fw-semibold mb-0">Total Event Amount:</h6>
+                        <h6 id="totalEventPrice" class="text-primary fw-bold mb-0 text-end">
+                            Rs. 0.00
+                        </h6>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Base Price -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">Base Price</label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-cash-stack"></i></span>
+                    @Html.TextBoxFor(m => m.BasePrice, new { style = "color:#0a5ca8; font-weight:700; text-align:right;", @class = "form-control", placeholder = "Enter base price", type = "number", step = "0.01", min = "0", @readonly = "readonly" })
+                </div>
+                @Html.ValidationMessageFor(m => m.BasePrice, "", new { @class = "text-danger small" })
+            </div>
+
+            <!-- Soft Copies & Edited Photos -->
+            <div class="form-group mb-4 border p-3 rounded">
+
+                <!-- All Soft Copies -->
+                <div class="form-check mb-3">
+                    @Html.CheckBoxFor(m => m.IsIncludeSodftCopies,
+                        new { @class = "form-check-input", id = "chkSoftCopies" })
+                    <label class="form-check-label fw-semibold" for="chkSoftCopies">
+                        All Soft Copies
+                    </label>
+                </div>
+
+                <!-- Edited Photos -->
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check">
+                        <input type="checkbox"
+                               id="chkEditedPhotos"
+                               class="form-check-input" />
+                        <label class="form-check-label fw-semibold" for="chkEditedPhotos">
+                            Edited Photos
+                        </label>
+                    </div>
+
+                    @Html.TextBoxFor(m => m.EditedPhotosCount,
+                        new
+                        {
+                            @class = "form-control",
+                            style = "width:120px",
+                            type = "number",
+                            min = "1",
+                            id = "txtEditedPhotos",
+                            disabled = "disabled",
+                            placeholder = "Count"
+                        })
+                </div>
+
+            </div>
+
+
+            <!-- Upload Photos -->
+            <div class="form-group mb-4">
+                <label class="form-label fw-semibold">
+                    <i class="bi bi-images me-1 icon-gradient"></i> Choose Files (Max 3)
+                </label>
+                <div class="input-group">
+                    <span class="input-group-text icon-gradient"><i class="bi bi-upload"></i></span>
+                    <input type="file" name="UploadedPhotos" multiple class="form-control" accept="image/*" onchange="previewImages(event)" />
+                </div>
+                <div id="previewContainer" class="mt-3 d-flex gap-2 flex-wrap"></div>
+                <small class="text-muted d-block mt-1">You can upload up to 3 photos.</small>
+            </div>
+
+            <!-- Active Switch -->
+            <div class="form-group mb-4 d-flex align-items-center justify-content-between">
+                <label class="fw-semibold mb-0">Active Status</label>
+                <div class="form-check form-switch">
+                    @Html.CheckBoxFor(m => m.IsActive, new { @class = "form-check-input", id = "IsActive" })
+                    <label class="form-check-label" for="IsActive">Active</label>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="text-end mt-5 d-flex justify-content-end gap-3">
+                @Html.ActionLink("Cancel", "Index", null, new { @class = "btn btn-glass px-4" })
+                <button type="submit" class="btn btn-glow px-4">
+                    <i class="bi bi-save"></i> Save
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /* ---------------------------------------------------
+           RESTORE SELECTED PACKAGE ITEMS + QTY
+        ----------------------------------------------------*/
+        window.addEventListener("DOMContentLoaded", function () {
+
+            // Restore selected package items
+            var selectedItems = @Html.Raw(Json.Encode(Model.SelectedPackageItemDetails.Select(x => new { x.PackageItemId, x.Qty })));
+
+            selectedItems.forEach(function(item) {
+                var chk = document.querySelector('.pkg-check[value="' + item.PackageItemId + '"]');
+                var qtyInput = document.querySelector('.qty-input[data-id="' + item.PackageItemId + '"]');
+                var hiddenQty = document.querySelector('.hidden-qty[data-id="' + item.PackageItemId + '"]');
+
+                if (chk) {
+                    chk.checked = true;
+                    if (qtyInput) qtyInput.disabled = false;
+                }
+                if (qtyInput) qtyInput.value = item.Qty;
+                if (hiddenQty) hiddenQty.value = item.Qty;
+            });
+
+            // Restore selected events
+            var selectedEvents = @Html.Raw(Json.Encode(Model.SelectedEventTypeIds ?? new List<int>()));
+
+            selectedEvents.forEach(function(evtId) {
+                var chk = document.querySelector('.event-check[value="' + evtId + '"]');
+                if (chk) chk.checked = true;
+            });
+
+            // Now recalc totals AFTER restoring values
+            updateItemAmounts();
+            updateEventAmounts();
+            updateBasePrice();
+        });
+
+        /* ---------------------------------------------------
+           UPDATE LOGIC (UNCHANGED)
+        ----------------------------------------------------*/
+        function updateItemAmounts() {
+            let total = 0;
+            document.querySelectorAll(".pkg-check").forEach(chk => {
+                const id = chk.dataset.id;
+                const price = parseFloat(chk.dataset.price);
+                const qtyInput = document.querySelector(`.qty-input[data-id="${id}"]`);
+                const hiddenQty = document.querySelector(`.hidden-qty[data-id="${id}"]`);
+                const amountEl = document.querySelector(`.amount-value[data-id="${id}"]`);
+
+                let qty = 0;
+                if (chk.checked) {
+                    qty = parseInt(qtyInput.value) || 1;
+                    qtyInput.disabled = false;
+                    amountEl.innerText = (price * qty).toFixed(2);
+                    total += price * qty;
+                } else {
+                    qtyInput.disabled = true;
+                    amountEl.innerText = "0.00";
+                }
+                hiddenQty.value = qty;
+            });
+            document.getElementById("totalItemPrice").innerText = "Rs. " + total.toFixed(2);
+            updateBasePrice();
+        }
+
+        function updateEventAmounts() {
+            let eventTotal = 0;
+            document.querySelectorAll(".event-check").forEach(chk => {
+                const id = chk.dataset.id;
+                const price = parseFloat(chk.dataset.price);
+                const amountEl = document.querySelector(`.event-amount-value[data-id="${id}"]`);
+                if (chk.checked) {
+                    amountEl.innerText = price.toFixed(2);
+                    eventTotal += price;
+                } else {
+                    amountEl.innerText = "0.00";
+                }
+            });
+            document.getElementById("totalEventPrice").innerText = "Rs. " + eventTotal.toFixed(2);
+            updateBasePrice();
+        }
+
+        function updateBasePrice() {
+            const itemTotal = parseFloat(document.getElementById("totalItemPrice").innerText.replace("Rs. ", "")) || 0;
+            const eventTotal = parseFloat(document.getElementById("totalEventPrice").innerText.replace("Rs. ", "")) || 0;
+            document.querySelector("input[name='BasePrice']").value = (itemTotal + eventTotal).toFixed(2);
+        }
+
+        // Qty button handlers
+        document.querySelectorAll(".qty-btn.plus").forEach(btn => {
+            btn.addEventListener("click", function () {
+                const id = this.dataset.id;
+                const input = document.querySelector(`.qty-input[data-id="${id}"]`);
+                input.value = parseInt(input.value) + 1;
+                updateItemAmounts();
+            });
+        });
+
+        document.querySelectorAll(".qty-btn.minus").forEach(btn => {
+            btn.addEventListener("click", function () {
+                const id = this.dataset.id;
+                const input = document.querySelector(`.qty-input[data-id="${id}"]`);
+                if (parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
+                updateItemAmounts();
+            });
+        });
+
+        document.querySelectorAll(".qty-input").forEach(input => {
+            input.addEventListener("input", updateItemAmounts);
+            input.addEventListener("change", updateItemAmounts);
+        });
+
+        document.querySelectorAll(".pkg-check").forEach(chk => chk.addEventListener("change", updateItemAmounts));
+        document.querySelectorAll(".event-check").forEach(chk => chk.addEventListener("change", updateEventAmounts));
+
+        // Select/unselect all buttons
+        document.getElementById("btnSelectAll").addEventListener("click", () => {
+            document.querySelectorAll(".pkg-check").forEach(chk => chk.checked = true);
+            updateItemAmounts();
+        });
+        document.getElementById("btnUnselectAll").addEventListener("click", () => {
+            document.querySelectorAll(".pkg-check").forEach(chk => chk.checked = false);
+            updateItemAmounts();
+        });
+        document.getElementById("btnSelectAllEvents").addEventListener("click", () => {
+            document.querySelectorAll(".event-check").forEach(chk => chk.checked = true);
+            updateEventAmounts();
+        });
+        document.getElementById("btnUnselectAllEvents").addEventListener("click", () => {
+            document.querySelectorAll(".event-check").forEach(chk => chk.checked = false);
+            updateEventAmounts();
+        });
+    </script>
+}
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0e7ff, #f5f3ff, #f0f9ff);
+            background-size: 300% 300%;
+            animation: bgShift 12s ease infinite;
+            font-family: 'Poppins', 'Segoe UI', sans-serif;
+        }
+
+        @@keyframes bgShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .package-edit-wrapper {
+            display: flex;
+            justify-content: center;
+        }
+
+        .package-edit-card {
+            width: 100%;
+            max-width: 750px;
+            background: #ffffff;
+            border-radius: 20px;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05), inset 2px 2px 6px rgba(255, 255, 255, 0.6), inset -2px -2px 8px rgba(0,0,0,0.05);
+            animation: fadeIn 0.8s ease;
+        }
+
+            .package-edit-card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, #4b6cb7, #43cea2, #4b6cb7);
+                animation: gradientFlow 6s linear infinite;
+            }
+
+        @@keyframes gradientFlow {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .preview-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+            .preview-img:hover {
+                transform: scale(1.05);
+            }
+
+        .btn-glow {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            color: #fff;
+            border: none;
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, #185a9d, #43cea2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-label {
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .form-control {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            color: #1e293b;
+            transition: all 0.3s ease;
+        }
+
+            .form-control:focus {
+                border-color: #4b6cb7;
+                box-shadow: 0 0 0 3px rgba(75,108,183,0.25);
+            }
+
+        .input-group-text {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px 0 0 10px;
+            color: #64748b;
+        }
+
+        .icon-gradient i {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.1rem;
+        }
+
+        .price-pill, .amount-pill {
+            background: #d9ecff;
+            color: #0a5ca8;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            min-width: 70px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        /* Subtle card row style */
+        .pkg-card {
+            background: #ffffff;
+            border-radius: 10px;
+            transition: 0.2s ease-in-out;
+            border: 1px solid #eef2ff;
+        }
+
+            .pkg-card:hover {
+                background: #f3f6ff;
+                transform: translateY(-2px);
+            }
+
+        /* Qty box */
+        .qty-box {
+            gap: 5px;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            background: #eef2ff;
+            color: #2d4cc8;
+            transition: 0.2s;
+        }
+
+            .qty-btn:hover {
+                background: #d7e0ff;
+            }
+
+        .qty-input {
+            width: 50px;
+            text-align: center;
+            background: #f8faff;
+        }
+
+        .pkg-check {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+}

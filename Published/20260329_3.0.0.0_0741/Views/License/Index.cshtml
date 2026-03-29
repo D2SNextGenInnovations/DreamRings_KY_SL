@@ -1,0 +1,79 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "License Activation";
+    <link href="~/Content/custom-styles.css" rel="stylesheet" />;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="page-header-icon">
+            <i class="fas fa-key"></i>
+        </div>
+        <h3 class="page-title mb-0">License Activation</h3>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- SUMMARY CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-success text-white me-3">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">License Status</h6>
+                    <h4 class="fw-bold">
+                        @(ViewBag.IsActive ? "Active" : "Not Activated")
+                    </h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="icon-circle bg-warning text-dark me-3">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">Expiry Date</h6>
+                    <h4 class="fw-bold">
+                        @(ViewBag.Expiry != null ? ((DateTime)ViewBag.Expiry).ToString("yyyy-MM-dd") : "N/A")
+                    </h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- ACTIVATION CARD -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white fw-semibold">
+        Enter Product Key
+    </div>
+
+    <div class="card-body">
+        @using (Html.BeginForm("Activate", "License", FormMethod.Post))
+        {
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Product Key</label>
+                <input type="text"
+                       name="productKey"
+                       class="form-control"
+                       placeholder="Enter your license key here..."
+                       required />
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-check-circle me-1"></i> Activate License
+            </button>
+        }
+    </div>
+</div>

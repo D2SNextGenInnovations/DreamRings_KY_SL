@@ -1,0 +1,27 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Models.PackagePhoto>
+<h2>Package Photos</h2>
+<p>@Html.ActionLink("Add New Photo", "Create", null, new { @class = "btn btn-primary mb-3" })</p>
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Photo</th>
+            <th>Package</th>
+            <th>Display Order</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var photo in Model)
+        {
+            <tr>
+                <td><img src="@photo.PhotoUrl" style="width:100px;height:60px;" /></td>
+                <td>@photo.Package.Name</td>
+                <td>@photo.DisplayOrder</td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = photo.PhotoId }, new { @class = "btn btn-warning btn-sm" })
+                    @Html.ActionLink("Delete", "Delete", new { id = photo.PhotoId }, new { @class = "btn btn-danger btn-sm" })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

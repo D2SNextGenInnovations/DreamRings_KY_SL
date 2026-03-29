@@ -22,7 +22,7 @@ namespace MrGroom_KY_SL.Web.Controllers
         private readonly PackageItemService _packageItemService = new PackageItemService();
         private readonly PackageService _packageService = new PackageService();
 
-        public ActionResult Index(string searchTerm, int page = 1, string manage = null)
+        public ActionResult Index(string searchTerm, int page = 1, string manage = null, bool showInactive = false)
         {
             try
             {
@@ -31,6 +31,12 @@ namespace MrGroom_KY_SL.Web.Controllers
 
                 // IQueryable
                 var query = _packageItemService.GetAll().AsQueryable();
+
+                // V3001
+                if (!showInactive)
+                {
+                    query = query.Where(i => i.IsActive == true);
+                }
 
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
@@ -41,11 +47,13 @@ namespace MrGroom_KY_SL.Web.Controllers
                     );
                 }
 
-                // Sunnary (before paging)
-                ViewBag.TotalItems = query.Count();
-                ViewBag.ActiveItems = query.Count(i => i.IsActive == true);
-                ViewBag.InactiveItems = query.Count(i => i.IsActive != true);
-                ViewBag.TotalValue = query.Sum(i => (decimal?)i.Price) ?? 0;
+                // V3001 Sunnary (before paging)
+                var allItems = _packageItemService.GetAll();
+
+                ViewBag.TotalItems = allItems.Count();
+                ViewBag.ActiveItems = allItems.Count(i => i.IsActive == true);
+                ViewBag.InactiveItems = allItems.Count(i => i.IsActive != true);
+                ViewBag.TotalValue = allItems.Sum(i => (decimal?)i.Price) ?? 0;
 
                 int totalPages = (int)Math.Ceiling((double)ViewBag.TotalItems / pageSize);
 
@@ -121,10 +129,12 @@ namespace MrGroom_KY_SL.Web.Controllers
             try
             {
                 var item = _packageItemService.GetById(id);
-                if (item == null)
+
+                // V3001 check deleete items
+                if (item == null || item.IsActive == false)
                 {
+                    TempData["ToastrMessage"] = "Event type not found or inactive!";
                     TempData["ToastrType"] = "warning";
-                    TempData["ToastrMessage"] = "Package item not found.";
                     return RedirectToAction("Index");
                 }
                 return View(item);
@@ -149,6 +159,17 @@ namespace MrGroom_KY_SL.Web.Controllers
                     return View(item);
                 }
 
+                // V3001
+                var existing = _packageItemService.GetById(item.PackageItemId);
+
+                // check deleted items
+                if (existing == null || existing.IsActive == false)
+                {
+                    TempData["ToastrMessage"] = "Cannot update inactive event type!";
+                    TempData["ToastrType"] = "warning";
+                    return RedirectToAction("Index");
+                }
+                // V3001
                 _packageItemService.Update(item);
 
                 TempData["ToastrType"] = "success";
@@ -196,10 +217,10 @@ namespace MrGroom_KY_SL.Web.Controllers
                 TempData["ToastrMessage"] = "Package item deleted successfully!";
                 return RedirectToAction("Index");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 TempData["ToastrType"] = "error";
-                TempData["ToastrMessage"] = "An error occurred while deleting the item.";
+                TempData["ToastrMessage"] = "An error occurred while deleting the item." + ex;
                 return RedirectToAction("Index");
             }
         }

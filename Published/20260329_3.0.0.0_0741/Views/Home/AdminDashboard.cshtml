@@ -1,0 +1,43 @@
+﻿@*@{
+        ViewBag.Title = "Admin Dashboard";
+    }
+    <h2>Admin Dashboard</h2>
+    <p>Welcome, @ViewBag.Username</p>
+    <p>@Html.ActionLink("Logout", "Logout", "Account")</p>*@
+@model MrGroom_KY_SL.Web.Models.AdminDashboardViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Users";
+}
+
+<h2>Admin Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white p-3">
+            <h5>Total Bookings</h5>
+            <h3>@Model?.TotalBookings ?? 0</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white p-3">
+            <h5>Total Customers</h5>
+            <h3>@Model?.TotalCustomers ?? 0</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark p-3">
+            <h5>Total Revenue</h5>
+            @*<h3>@Model.TotalRevenue.ToString("C")</h3>*@
+            <h3>@Model?.TotalRevenue ?? 0</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white p-3">
+            <h5>Pending Payments</h5>
+   
+            <h3>@Model?.PendingPayments ?? 0</h3>
+        </div>
+    </div>
+</div>

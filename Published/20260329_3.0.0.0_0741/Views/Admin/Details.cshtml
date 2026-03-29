@@ -1,0 +1,188 @@
+﻿@model MrGroom_KY_SL.Web.Models.UserViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "User Details";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+<style>
+    .user-header {
+        background: linear-gradient(135deg, #0ea5e9, #6366f1);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.25);
+    }
+
+        .user-header h2 {
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+    .user-meta {
+        color: #e0e0e0;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .section-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        color: #333;
+        border-left: 5px solid #0ea5e9;
+        padding-left: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .card-modern {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        background-color: #fff;
+        transition: all 0.3s ease;
+    }
+
+        .card-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+        }
+
+    .badge-status {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+    }
+
+    .divider {
+        border-bottom: 2px dashed #ddd;
+        margin: 2rem 0;
+    }
+
+    .profile-img {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .no-photo {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #9ca3af;
+        border: 3px solid #fff;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #0ea5e9, #6366f1);
+        color: #fff;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            transform: translateY(-2px);
+        }
+</style>
+
+<div class="container py-5">
+    <!-- Header -->
+    <div class="user-header mb-5 d-flex align-items-center justify-content-between flex-wrap">
+        <div class="d-flex align-items-center">
+            @if (!string.IsNullOrEmpty(Model.PhotoBase64))
+            {
+                <img src="data:image/png;base64,@Model.PhotoBase64" class="profile-img me-4" alt="@Model.Username" />
+            }
+            else
+            {
+                <div class="no-photo me-4"><i class="bi bi-person"></i></div>
+            }
+
+            <div>
+                <h2><i class="bi bi-person-badge me-2"></i> @Model.FirstName @Model.LastName</h2>
+                <div class="user-meta">
+                    <strong>Username:</strong> @Model.Username <br />
+                    <strong>Email:</strong> @Model.Email <br />
+                    <strong>Role:</strong> @Model.Role
+                </div>
+            </div>
+        </div>
+
+        <a href="@Url.Action("Index", "Admin")" class="btn btn-light rounded-pill px-4 mt-3 mt-md-0">
+            <i class="bi bi-arrow-left-circle me-1"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Details Section -->
+    <div class="row g-4 mb-5">
+        <!-- Basic Info -->
+        <div class="col-md-6">
+            <div class="card-modern p-4 h-100">
+                <h5 class="section-title"><i class="bi bi-info-circle-fill me-2"></i> Basic Information</h5>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-secondary">User ID</dt>
+                    <dd class="col-sm-7">@Model.UserId</dd>
+
+                    <dt class="col-sm-5 text-secondary">Full Name</dt>
+                    <dd class="col-sm-7">@Model.FirstName @Model.LastName</dd>
+
+                    <dt class="col-sm-5 text-secondary">Gender</dt>
+                    <dd class="col-sm-7">@Model.Gender</dd>
+
+                    <dt class="col-sm-5 text-secondary">Role</dt>
+                    <dd class="col-sm-7">@Model.Role</dd>
+
+                    <dt class="col-sm-5 text-secondary">Status</dt>
+                    <dd class="col-sm-7">
+                        @if (Model.IsActive == true)
+                        {
+                            <span class="badge bg-success badge-status">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger badge-status">Inactive</span>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="col-md-6">
+            <div class="card-modern p-4 h-100">
+                <h5 class="section-title"><i class="bi bi-clock-history me-2"></i> Audit Information</h5>
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-secondary">Created On</dt>
+                    <dd class="col-sm-7">@(Model.CreatedOn?.ToString("yyyy-MM-dd") ?? "")</dd>
+
+                    <dt class="col-sm-5 text-secondary">Created By</dt>
+                    <dd class="col-sm-7">@Model.CreatedBy</dd>
+
+                    <dt class="col-sm-5 text-secondary">Modified On</dt>
+                    <dd class="col-sm-7">@(Model.ModifiedOn?.ToString("yyyy-MM-dd") ?? "")</dd>
+
+                    <dt class="col-sm-5 text-secondary">Modified By</dt>
+                    <dd class="col-sm-7">@Model.ModifiedBy</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="text-center mt-5">
+        <a href="@Url.Action("Index", "Admin")" class="btn btn-gradient rounded-pill px-5 py-2">
+            <i class="bi bi-arrow-left-circle me-2"></i> Back to List
+        </a>
+    </div>
+</div>

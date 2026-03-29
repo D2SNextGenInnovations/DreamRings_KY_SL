@@ -1,0 +1,82 @@
+﻿<!-- Shared Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content p-3 shadow-lg rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-gradient" id="paymentModalLabel">
+                    <i class="bi bi-credit-card me-2"></i> Complete Payment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" name="BookingId" id="paymentBookingId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Amount</label>
+                        <input type="number" name="Amount" class="form-control" step="0.01" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Payment Method</label>
+                        <input type="text" name="PaymentMethod" class="form-control" placeholder="e.g., Cash, Card" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Payment Type</label>
+                        <select name="PaymentType" class="form-select" required>
+                            <option value="">- Select Type -</option>
+                            <option>Advance</option>
+                            <option>Half</option>
+                            <option>Full</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Remarks</label>
+                        <textarea name="Remarks" class="form-control" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-glass" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button class="btn btn-glow" id="btnSavePayment">
+                    <i class="bi bi-save"></i> Save Payment
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            //Save Payment
+            $('#btnSavePayment').on('click', function () {
+                const paymentData = $('#paymentForm').serialize();
+
+                $.ajax({
+                    url: '@Url.Action("SavePayment", "AdminBookings")',
+                    type: 'POST',
+                    data: paymentData,
+                    success: function (res) {
+                        if (res.success) {
+                            toastr.success(res.message);
+                            $('#paymentModal').modal('hide');
+                            setTimeout(() => {
+                                window.location.href = '@Url.Action("Index", "AdminBookings")';
+                            }, 1500);
+                        } else {
+                            toastr.warning(res.message);
+                        }
+                    },
+                    error: function () {
+                        toastr.error('Error saving payment.');
+                    }
+                });
+            });
+        });
+    </script>
+}

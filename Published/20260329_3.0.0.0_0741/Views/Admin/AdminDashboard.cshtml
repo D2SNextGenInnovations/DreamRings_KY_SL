@@ -1,0 +1,421 @@
+﻿@model MrGroom_KY_SL.Web.Models.AdminDashboardViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Admin Dashboard";
+    <link href="~/Content/custom-styles.css" rel="stylesheet" />;
+}
+
+<!-- FullCalendar & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+@Html.Raw("<script src='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js'></script>")
+
+
+<!--Header -->
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="page-header-icon">
+            <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <h3 class="page-title mb-0">Admin Dashboard</h3>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- Dashboard Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-primary text-white shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-white-50 mb-1">Total Bookings</h6>
+                <h2 class="fw-bold mb-0">@Model.TotalBookings</h2>
+            </div>
+            <div class="dashboard-icon bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-calendar-check fa-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-success text-white shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-white-50 mb-1">Total Customers</h6>
+                <h2 class="fw-bold mb-0">@Model.TotalCustomers</h2>
+            </div>
+            <div class="dashboard-icon bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-users fa-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-warning text-dark shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-dark-50 mb-1">Total Revenue</h6>
+                <h2 class="fw-bold mb-0">@Model.TotalRevenue.ToString("C")</h2>
+            </div>
+            <div class="dashboard-icon bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-coins fa-lg text-dark"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6">
+        <div class="dashboard-card bg-gradient-danger text-white shadow-lg border-0 rounded-4 p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <h6 class="text-white-50 mb-1">Pending Payments</h6>
+                <h2 class="fw-bold mb-0">@Model.PendingPayments</h2>
+            </div>
+            <div class="dashboard-icon bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center">
+                <i class="fas fa-exclamation-circle fa-lg"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+
+<!-- Calendar Header -->
+<div class="calendar-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <!-- Left: View Toggle -->
+    <div class="calendar-view-toggle btn-group">
+        <button type="button" class="btn btn-sm btn-outline-light active" id="btnCalendarView">
+            <i class="fas fa-calendar me-1"></i> Calendar
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-light" id="btnListView">
+            <i class="fas fa-list me-1"></i> List
+        </button>
+    </div>
+
+    <!-- Center: Title -->
+    <div class="calendar-title text-white fw-semibold">
+        <span id="calendarTitle"></span>
+    </div>
+
+    <!-- Right: Navigation -->
+    <div class="calendar-nav btn-group">
+        <button type="button" class="btn btn-sm btn-light" id="prevYear" title="Previous Year">«</button>
+        <button type="button" class="btn btn-sm btn-light" id="prevMonth" title="Previous Month">‹</button>
+        <button type="button" class="btn btn-sm btn-light" id="nextMonth" title="Next Month">›</button>
+        <button type="button" class="btn btn-sm btn-light" id="nextYear" title="Next Year">»</button>
+    </div>
+</div>
+
+<!-- Calendar Container -->
+<div id="calendar" class="modern-calendar rounded-3 shadow-sm border bg-white p-2" style="min-height:550px;"></div>
+
+
+<!-- Redesigned Modal for Event Details -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+
+            <!-- Header -->
+            <div class="modal-header bg-gradient-primary text-white px-4 py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:40px;height:40px;">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" id="bookingModalLabel">Booking Details</h5>
+                        <small class="text-white-50">Appointment overview</small>
+                    </div>
+                </div>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body bg-light px-4 py-4">
+                <div id="bookingDetailsContent"
+                     class="bg-white rounded-3 shadow-sm p-3">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer bg-light px-4 py-3 d-flex justify-content-between">
+                <button type="button"
+                        class="btn btn-outline-secondary rounded-pill px-4"
+                        data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Close
+                </button>
+
+                <a id="editBookingBtn"
+                   href="#"
+                   class="btn btn-primary rounded-pill px-4 shadow-sm">
+                    <i class="fas fa-pen me-1"></i> Edit Booking
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        let calendar;
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const calendarEl = document.getElementById('calendar');
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                height: 'auto',
+                headerToolbar: false,
+                fixedWeekCount: false,
+                dayMaxEvents: 3,
+
+                events: '@Url.Action("GetBookingsForCalendar", "Admin")',
+
+                eventDidMount: function (info) {
+                    const status = info.event.extendedProps.status;
+
+                    if (status === 'Confirmed') info.el.classList.add('event-confirmed');
+                    if (status === 'Pending') info.el.classList.add('event-pending');
+                    if (status === 'Cancelled') info.el.classList.add('event-cancelled');
+
+                    // Hover popover
+                    new bootstrap.Popover(info.el, {
+                        trigger: 'hover',
+                        placement: 'auto',
+                        html: true,
+                        content: `
+                            <div class="calendar-popover">
+                                <strong>${info.event.title}</strong><br/>
+                                <small>${info.event.start.toLocaleDateString()}</small>
+                            </div>
+                        `
+                    });
+                },
+
+                // Event click shows detailed modal
+                eventClick: function (info) {
+                    const event = info.event;
+
+                    document.getElementById('bookingDetailsContent').innerHTML = `
+                        <div class="mb-3">
+                            <h5 class="fw-bold">${event.title}</h5>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-calendar-day me-2 text-primary"></i>
+                                <strong>Date:</strong> ${event.start.toLocaleDateString()}
+                            </p>
+                            <p class ="text-muted mb-1">
+                                <i class ="fas fa-map-marker-alt me-2 text-success"></i>
+                                <strong>Location:</strong> ${event.extendedProps.location || 'N/A'}
+                            </p>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-info-circle me-2 text-info"></i>
+                                <strong>Status:</strong> ${event.extendedProps.status || 'N/A'}
+                            </p>
+                        </div>
+                    `;
+
+                    document.getElementById('editBookingBtn').href = '/AdminBookings/Edit/' + event.id;
+
+                    new bootstrap.Modal(document.getElementById('bookingModal')).show();
+                }
+            });
+
+            calendar.render();
+            updateTitle();
+
+            // Navigation buttons
+            $('#prevMonth').click(() => { calendar.prev(); updateTitle(); });
+            $('#nextMonth').click(() => { calendar.next(); updateTitle(); });
+            $('#prevYear').click(() => {
+                calendar.gotoDate(new Date(calendar.getDate().getFullYear() - 1, calendar.getDate().getMonth()));
+                updateTitle();
+            });
+            $('#nextYear').click(() => {
+                calendar.gotoDate(new Date(calendar.getDate().getFullYear() + 1, calendar.getDate().getMonth()));
+                updateTitle();
+            });
+
+            // View toggle buttons
+            $('#btnListView').click(() => {
+                calendar.changeView('listMonth');
+                $('#btnListView').addClass('active');
+                $('#btnCalendarView').removeClass('active');
+            });
+            $('#btnCalendarView').click(() => {
+                calendar.changeView('dayGridMonth');
+                $('#btnCalendarView').addClass('active');
+                $('#btnListView').removeClass('active');
+            });
+
+            function updateTitle() {
+                document.getElementById('calendarTitle').innerText = calendar.view.title;
+            }
+        });
+    </script>
+}
+
+
+
+
+    <style>
+        /* Redesigned Summary Cards */
+        .dashboard-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+
+            .dashboard-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+            }
+
+        .dashboard-icon {
+            width: 55px;
+            height: 55px;
+            flex-shrink: 0;
+        }
+
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, #facc15, #eab308);
+        }
+
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+        }
+
+        /* Calendar Styles */
+        .fc .fc-toolbar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .fc-button {
+            border-radius: 50px !important;
+            font-size: 0.85rem;
+            padding: 4px 10px !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        #yearFilter {
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            min-width: 100px;
+            cursor: pointer;
+        }
+
+        .fc-daygrid-day:hover {
+            background-color: #f8fafc;
+        }
+
+        .fc-day-today {
+            background-color: rgba(59, 130, 246, 0.08) !important;
+        }
+
+        .fc-event {
+            border: none !important;
+            border-radius: 6px !important;
+            padding: 2px 5px !important;
+            font-size: 0.8rem !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+            .fc-event:hover {
+                transform: scale(1.03);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            }
+
+        /*Calendar*/
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #5aa6a6;
+            padding: 10px 15px;
+            border-radius: 8px 8px 0 0;
+            color: #fff;
+        }
+
+        .calendar-view-toggle .btn {
+            border-radius: 20px;
+        }
+
+        .calendar-view-toggle .active {
+            background: #fff;
+            color: #5aa6a6;
+            font-weight: 600;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #calendarTitle {
+            font-weight: 600;
+            padding: 0 10px;
+        }
+
+        .modern-calendar {
+            background: #fff;
+            border-radius: 0 0 8px 8px;
+            padding: 10px;
+        }
+
+        .fc-daygrid-day-frame {
+            padding: 6px;
+        }
+
+        .fc-daygrid-day-number {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .fc-event {
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            border: none;
+        }
+
+        .event-confirmed {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .event-pending {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .event-cancelled {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .calendar-popover {
+            font-size: 0.8rem;
+        }
+
+        .bg-gradient-primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+    </style>
+}

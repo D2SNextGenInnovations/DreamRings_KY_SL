@@ -58,6 +58,20 @@ namespace MrGroom_KY_SL.Data
                 .WithRequired(pip => pip.PackageItem)
                 .HasForeignKey(pip => pip.PackageItemId)
                 .WillCascadeOnDelete(false);
+
+            //V3001
+            modelBuilder.Entity<PackageEventType>()
+                .HasRequired(p => p.Package)
+                .WithMany()
+                .HasForeignKey(p => p.PackageId)
+                .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<PackageEventType>()
+                .HasRequired(p => p.EventType)
+                .WithMany()
+                .HasForeignKey(p => p.EventTypeId)
+                .WillCascadeOnDelete(false);
+            //V3001
         }
     }
 

@@ -1,0 +1,74 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Web.Models.UserViewModel>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Admin - Users";
+    bool isManageMode = Request.QueryString["manage"] == "true";
+    <link href="~/Content/custom-styles.css" rel="stylesheet" />;
+}
+
+<!-- PAGE HEADER -->
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="page-header-icon">
+            <i class="fas fa-user-cog"></i>
+        </div>
+        <h3 class="page-title mb-0">Users</h3>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- SEARCH + CREATE -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    @using (Html.BeginForm("Index", "Admin", FormMethod.Get))
+    {
+        <div class="search-bar-soft d-flex align-items-center">
+            <input type="text" name="searchTerm" placeholder="Search by username or email" value="@ViewBag.SearchTerm" />
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </div>
+    }
+
+    <a href="@Url.Action("Create", "Admin")" class="fab-btn-inline">
+        <i class="fas fa-plus"></i>
+        <span class="ms-2">Create New</span>
+    </a>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- TABLE + PAGINATION -->
+<div id="usersContainer">
+    @Html.Partial("_UsersTable", Model)
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on("click", ".ajax-page", function (e) {
+            e.preventDefault();
+            var url = $(this).attr("href");
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "html",
+                beforeSend: function () {
+                    $("#usersContainer").css("opacity", "0.6");
+                },
+                success: function (data) {
+                    if ($(data).find("#usersContainer").length) {
+                        $("#usersContainer").html($(data).find("#usersContainer").html());
+                    } else {
+                        $("#usersContainer").html(data);
+                    }
+                    $("#usersContainer").css("opacity", "1");
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                },
+                error: function () {
+                    alert("Failed to load data. Please try again.");
+                    $("#usersContainer").css("opacity", "1");
+                }
+            });
+        });
+    </script>
+}

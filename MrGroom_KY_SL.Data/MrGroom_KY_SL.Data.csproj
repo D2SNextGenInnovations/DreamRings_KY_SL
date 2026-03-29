@@ -160,6 +160,10 @@
     <Compile Include="Migrations\202603040422334_AddDiscountToBookings.designer.cs">
       <DependentUpon>202603040422334_AddDiscountToBookings.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202603281725454_deleteeventTypesOnly.cs" />
+    <Compile Include="Migrations\202603281725454_deleteeventTypesOnly.designer.cs">
+      <DependentUpon>202603281725454_deleteeventTypesOnly.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\IRepository.cs" />
@@ -238,6 +242,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202603040422334_AddDiscountToBookings.resx">
       <DependentUpon>202603040422334_AddDiscountToBookings.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202603281725454_deleteeventTypesOnly.resx">
+      <DependentUpon>202603281725454_deleteeventTypesOnly.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

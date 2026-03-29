@@ -1,0 +1,45 @@
+﻿@model MrGroom_KY_SL.Models.PackagePhoto
+@{
+    ViewBag.Title = Model.PhotoId == 0 ? "Add Package Photo" : "Edit Package Photo";
+}
+
+<h2>@ViewBag.Title</h2>
+
+@using (Html.BeginForm(null, null, FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.PhotoId)
+
+    <div class="mb-3">
+        @Html.LabelFor(m => m.PackageId, "Package")
+        @Html.DropDownListFor(m => m.PackageId, (SelectList)ViewBag.Packages, "Select Package", new { @class = "form-select" })
+    </div>
+
+    <div class="mb-3">
+        <label>Upload Photo</label>
+        <input type="file" name="photoFile" class="form-control" accept="image/*" onchange="previewImage(event)" />
+        <img id="preview" style="margin-top:10px;width:150px;height:100px;display:none;" />
+    </div>
+
+    <div class="mb-3">
+        @Html.LabelFor(m => m.DisplayOrder)
+        @Html.TextBoxFor(m => m.DisplayOrder, new { @class = "form-control" })
+    </div>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    @Html.ActionLink("Back to List", "Index", null, new { @class = "btn btn-secondary ms-2" })
+}
+
+@section Scripts {
+    <script>
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function(){
+            var output = document.getElementById('preview');
+            output.src = reader.result;
+            output.style.display = 'block';
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    }
+    </script>
+}

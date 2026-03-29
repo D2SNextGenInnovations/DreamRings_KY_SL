@@ -26,6 +26,7 @@ namespace MrGroom_KY_SL.Data.UnitOfWork
         private Repository<CompanyInfo> _companyInfoRepository;
         private Repository<BookingEventType> _bookingEventTypeRepository;
         private Repository<BookingAddon> _bookingAddonRepository;
+        private Repository<PackageItemPackage> _packageItemPackageRepository;//V3001
 
         public UnitOfWork()
         {
@@ -47,7 +48,7 @@ namespace MrGroom_KY_SL.Data.UnitOfWork
         public Repository<CompanyInfo> CompanyInfoRepository => _companyInfoRepository ?? (_companyInfoRepository = new Repository<CompanyInfo>(_context));
         public Repository<BookingEventType> BookingEventTypeRepository => _bookingEventTypeRepository ?? (_bookingEventTypeRepository = new Repository<BookingEventType>(_context));
         public Repository<BookingAddon> BookingAddonRepository => _bookingAddonRepository ?? (_bookingAddonRepository = new Repository<BookingAddon>(_context));
-
+        public Repository<PackageItemPackage> PackageItemPackageRepository => _packageItemPackageRepository ?? (_packageItemPackageRepository = new Repository<PackageItemPackage>(_context));//V3001
 
         public AppDbContext Context => _context;
         public void Save() => _context.SaveChanges();

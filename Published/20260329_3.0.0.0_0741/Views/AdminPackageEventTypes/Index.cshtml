@@ -1,0 +1,72 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Models.EventType>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Admin - Package Event Types";
+    <link href="~/Content/custom-styles.css" rel="stylesheet" />;
+}
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <div class="d-flex align-items-center gap-2">
+        <div class="page-header-icon">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <h3 class="page-title mb-0">Package Event Types</h3>
+    </div>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- Search + Create -->
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    @using (Html.BeginForm("Index", "AdminPackageEventTypes", FormMethod.Get))
+    {
+        <div class="search-bar-soft d-flex align-items-center">
+            <input type="text" name="searchTerm" placeholder="Search..." value="@ViewBag.SearchTerm" />
+            <button type="submit"><i class="fas fa-search"></i></button>
+        </div>
+    }
+
+    <a href="@Url.Action("Create", "AdminPackageEventTypes")" class="fab-btn-inline">
+        <i class="fas fa-plus"></i>
+        <span class="ms-2">Create New</span>
+    </a>
+</div>
+
+<hr class="soft-gradient-line" />
+
+<!-- Table + Pagination -->
+<div id="packageEventTypesContainer">
+    @Html.Partial("_PackageEventTypesTable", Model)
+</div>
+
+@section Scripts {
+    <script>
+        $(document).on("click", ".ajax-page", function (e) {
+            e.preventDefault();
+            var url = $(this).attr("href");
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "html",
+                beforeSend: function () {
+                    $("#packageEventTypesContainer").css("opacity", "0.6");
+                },
+                success: function (data) {
+                    if ($(data).find("#packageEventTypesContainer").length) {
+                        $("#packageEventTypesContainer").html($(data).find("#packageEventTypesContainer").html());
+                    } else {
+                        $("#packageEventTypesContainer").html(data);
+                    }
+                    $("#packageEventTypesContainer").css("opacity", "1");
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                },
+                error: function () {
+                    alert("Failed to load data. Please try again.");
+                    $("#packageEventTypesContainer").css("opacity", "1");
+                }
+            });
+        });
+    </script>
+}

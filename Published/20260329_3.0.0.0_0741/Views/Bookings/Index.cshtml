@@ -1,0 +1,32 @@
+﻿@model IEnumerable<MrGroom_KY_SL.Models.Booking>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Bookings";
+}
+<h2>Bookings</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Package</th>
+            <th>Event Date</th>
+            <th>Staff</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var b in Model)
+        {
+        <tr>
+            <td>@b.Customer.FirstName</td>
+            <td>@b.Package.Name</td>
+            <td>@b.EventDate.ToString("dd MMM yyyy")</td>
+            <td>
+                @(b.StaffMembers != null && b.StaffMembers.Any() ? string.Join(", ", b.StaffMembers.Select(s => s.Name)) : "No staff assigned")
+            </td>
+
+            <td>@b.Status</td>
+        </tr>
+        }
+    </tbody>
+</table>

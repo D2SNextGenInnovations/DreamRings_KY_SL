@@ -1,0 +1,239 @@
+﻿@model MrGroom_KY_SL.Models.Package
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Package Details";
+}
+
+<style>
+    /* ===== Modern Detail Page Styles ===== */
+    .package-header {
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        color: #fff;
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25);
+    }
+
+        .package-header h2 {
+            font-weight: 700;
+            font-size: 2rem;
+        }
+
+    .package-meta {
+        color: #e0e0e0;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .section-title {
+        font-weight: 600;
+        font-size: 1.25rem;
+        color: #333;
+        border-left: 5px solid #4f46e5;
+        padding-left: 10px;
+        margin-bottom: 1rem;
+    }
+
+    .card-modern {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        background-color: #fff;
+    }
+
+        .card-modern:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+        }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #f1f1f1;
+        padding: 0.9rem 1rem;
+        font-size: 1rem;
+    }
+
+    .photo-grid img {
+        height: 180px;
+        object-fit: cover;
+        border-radius: 0.75rem;
+        transition: transform 0.3s ease;
+    }
+
+        .photo-grid img:hover {
+            transform: scale(1.05);
+        }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #4f46e5, #9333ea);
+        color: #fff;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #5b54f5, #a855f7);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+    .divider {
+        border-bottom: 2px dashed #ddd;
+        margin: 2rem 0;
+    }
+
+    .no-data {
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+</style>
+
+<div class="container py-5">
+    <!-- Header -->
+    <div class="package-header mb-5 d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+            <h2><i class="bi bi-box-seam me-2"></i> @Model.Name</h2>
+            <div class="package-meta">
+                <strong>Price:</strong> Rs. @Model.BasePrice.ToString("N2") <br />
+                <strong><span>@Model.Description</span></strong>
+            </div>
+            <div class="mt-1">
+                <strong>Status</strong>
+                @if (Model.IsActive == true)
+                {
+                    <span class="badge bg-success ms-1">Active</span>
+                }
+                else
+                {
+                    <span class="badge bg-danger ms-1">Inactive</span>
+                }
+            </div>
+        </div>
+        <a href="@Url.Action("Index", "Package")" class="btn btn-light rounded-pill px-4 mt-3 mt-md-0">
+            <i class="bi bi-arrow-left-circle me-1"></i> Back to List
+        </a>
+    </div>
+
+    <!-- Photos -->
+    <h5 class="section-title"><i class="bi bi-image-fill me-2 text-primary"></i> Photos</h5>
+    @if (Model.PackagePhotos != null && Model.PackagePhotos.Any())
+    {
+        <div class="row g-4 photo-grid mb-5">
+            @foreach (var photo in Model.PackagePhotos)
+            {
+                <div class="col-md-3 col-sm-6">
+                    <div class="card-modern p-2">
+                        <img src="@photo.PhotoUrl" alt="Package Photo" class="w-100" />
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="no-data mb-5">
+            <i class="bi bi-info-circle me-2"></i> No photos available.
+        </div>
+    }
+
+    <div class="divider"></div>
+
+    <!-- Included Items -->
+    <h5 class="section-title"><i class="bi bi-list-check me-2 text-success"></i> Included Items</h5>
+    @if (Model.PackageItemPackages != null && Model.PackageItemPackages.Any())
+    {
+        <table class="table table-bordered table-hover mb-5">
+            <thead class="table-light">
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Unit Price (Rs.)</th>
+                    <th>Total Price (Rs.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pip in Model.PackageItemPackages)
+                {
+                    <tr>
+                        <td>@pip.PackageItem.Name</td>
+                        <td align="center">@pip.Qty</td>
+                        <td align="right">@pip.UnitPrice.ToString("N2")</td>
+                        <td align="right">@pip.CalculatedPrice.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" class="text-end">Total:</th>
+                    <th class="text-end">
+                        @Model.PackageItemPackages.Sum(x => x.CalculatedPrice).ToString("N2")
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    }
+    else
+    {
+        <div class="no-data mb-5">
+            <i class="bi bi-info-circle me-2"></i> No items included.
+        </div>
+    }
+
+    <div class="divider"></div>
+
+    <!-- Applicable Event Types -->
+    <h5 class="section-title"><i class="bi bi-calendar-event-fill me-2 text-primary"></i> Applicable Event Types</h5>
+    @if (Model.PackageEventTypes != null && Model.PackageEventTypes.Any())
+    {
+        <table class="table table-bordered mb-5">
+            <thead>
+                <tr>
+                    <th>Event Type</th>
+                    <th>Unit Price (Rs.)</th>
+                    <th>Total Price (Rs.)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pet in Model.PackageEventTypes)
+                {
+                    <tr>
+                        <td>@pet.EventType.Name</td>
+                        <td align="right">@pet.UnitPrice.ToString("N2")</td>
+                        <td align="right">@pet.UnitPrice.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="2" class="text-end">Total:</th>
+                    <th class="text-end">@Model.PackageEventTypes.Sum(x => x.UnitPrice).ToString("N2")</th>
+                </tr>
+            </tfoot>
+        </table>
+    }
+
+    else
+    {
+        <div class="no-data mb-5">
+            <i class="bi bi-info-circle me-2"></i> No event types assigned.
+        </div>
+    }
+
+
+
+    <div class="text-center mt-5">
+        <a href="@Url.Action("Index", "Package")" class="btn btn-gradient rounded-pill px-5 py-2">
+            <i class="bi bi-arrow-left-circle me-2"></i> Back to List
+        </a>
+    </div>
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+}

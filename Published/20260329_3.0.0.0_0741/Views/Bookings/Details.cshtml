@@ -1,0 +1,13 @@
+﻿@model MrGroom_KY_SL.Models.Booking
+@{ Layout = "~/Views/Shared/_Layout.cshtml"; ViewBag.Title = "Booking Details"; }
+<h2>Booking Details</h2>
+<dl class="row">
+    <dt class="col-sm-3">Customer</dt>
+    <dd class="col-sm-9">@Model.Customer.FirstName</dd>
+    <dt class="col-sm-3">Package</dt>
+    <dd class="col-sm-9">@Model.Package.Name</dd>
+    <dt class="col-sm-3">Event Date</dt>
+    <dd class="col-sm-9">@Model.EventDate.ToString("dd MMM yyyy")</dd>
+    <dt class="col-sm-3">Assigned Staff</dt>
+    <dd class="col-sm-9">@string.Join(", ", (Model.StaffMembers ?? new List<MrGroom_KY_SL.Models.Staff>()).Select(s => s.Name))</dd>
+</dl>
